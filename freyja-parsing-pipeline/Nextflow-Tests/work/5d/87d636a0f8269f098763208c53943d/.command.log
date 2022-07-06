@@ -1,0 +1,23 @@
+WWS-00647q_S40_L001.clipped.bam
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 11, in <module>
+    __import__(dependency)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/__init__.py", line 229, in <module>
+    core.getlimits._register_known_types()
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/getlimits.py", line 226, in _register_known_types
+    float128_ma = MachArLike(ld,
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/getlimits.py", line 55, in __init__
+    self._str_eps = self._float_to_str(self.eps)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/getlimits.py", line 119, in _float_to_str
+    return self.params['fmt'] % array(_fr0(value)[0], self.ftype)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/arrayprint.py", line 1590, in _array_str_implementation
+    return _guarded_repr_or_str(np.ndarray.__getitem__(a, ()))
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/arrayprint.py", line 513, in wrapper
+    return f(self, *args, **kwargs)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/arrayprint.py", line 1572, in _guarded_repr_or_str
+    return str(v)
+KeyboardInterrupt

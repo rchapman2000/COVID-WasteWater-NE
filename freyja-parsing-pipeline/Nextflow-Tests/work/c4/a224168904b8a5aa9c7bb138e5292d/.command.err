@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 48, in <module>
+    from pandas.core.api import (
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/api.py", line 48, in <module>
+    from pandas.core.groupby import (
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/groupby/__init__.py", line 1, in <module>
+    from pandas.core.groupby.generic import (
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/groupby/generic.py", line 70, in <module>
+    from pandas.core.frame import DataFrame
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/frame.py", line 10975, in <module>
+    ops.add_flex_arithmetic_methods(DataFrame)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/ops/methods.py", line 57, in add_flex_arithmetic_methods
+    new_methods = _create_methods(cls, flex_arith_method, flex_comp_method)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/ops/methods.py", line 108, in _create_methods
+    "ne": comp_method(operator.ne),
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/ops/__init__.py", line 465, in flex_comp_method_FRAME
+    def f(self, other, axis=default_axis, level=None):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/util/_decorators.py", line 489, in __call__
+    func.__doc__ = dedent(self.join.join(docitems))
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/textwrap.py", line 439, in dedent
+    indents = _leading_whitespace_re.findall(text)
+KeyboardInterrupt

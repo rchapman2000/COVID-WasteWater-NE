@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 5, in <module>
+    from freyja.sample_deconv import buildLineageMap, build_mix_and_depth_arrays,\
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/sample_deconv.py", line 6, in <module>
+    import cvxpy as cp
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/cvxpy/__init__.py", line 18, in <module>
+    import cvxpy.interface.scipy_wrapper
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/cvxpy/interface/scipy_wrapper.py", line 19, in <module>
+    from cvxpy.expressions import expression as exp
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/cvxpy/expressions/expression.py", line 24, in <module>
+    import cvxpy.settings as s
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/cvxpy/settings.py", line 16, in <module>
+    import logging
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/logging/__init__.py", line 26, in <module>
+    import sys, os, time, io, re, traceback, warnings, weakref, collections.abc
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/traceback.py", line 457, in <module>
+    class TracebackException:
+KeyboardInterrupt

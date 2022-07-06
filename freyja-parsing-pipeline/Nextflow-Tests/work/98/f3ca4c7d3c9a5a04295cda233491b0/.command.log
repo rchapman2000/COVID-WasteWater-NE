@@ -1,0 +1,29 @@
+WWS-00642q_S35_L001.clipped.bam
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 22, in <module>
+    from pandas.compat import is_numpy_dev as _is_numpy_dev
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/compat/__init__.py", line 15, in <module>
+    from pandas.compat.numpy import (
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/compat/numpy/__init__.py", line 4, in <module>
+    from pandas.util.version import Version
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/util/__init__.py", line 1, in <module>
+    from pandas.util._decorators import (  # noqa:F401
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/util/_decorators.py", line 14, in <module>
+    from pandas._libs.properties import cache_readonly  # noqa:F401
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/_libs/__init__.py", line 13, in <module>
+    from pandas._libs.interval import Interval
+  File "pandas/_libs/interval.pyx", line 1, in init pandas._libs.interval
+  File "pandas/_libs/hashtable.pyx", line 1, in init pandas._libs.hashtable
+  File "pandas/_libs/missing.pyx", line 1, in init pandas._libs.missing
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/_libs/tslibs/__init__.py", line 30, in <module>
+    from pandas._libs.tslibs.conversion import (
+  File "pandas/_libs/tslibs/conversion.pyx", line 63, in init pandas._libs.tslibs.conversion
+  File "pandas/_libs/tslibs/parsing.pyx", line 1, in init pandas._libs.tslibs.parsing
+  File "pandas/_libs/tslibs/offsets.pyx", line 1, in init pandas._libs.tslibs.offsets
+  File "pandas/_libs/tslibs/timestamps.pyx", line 1, in init pandas._libs.tslibs.timestamps
+  File "<frozen importlib._bootstrap>", line 216, in _lock_unlock_module
+KeyboardInterrupt

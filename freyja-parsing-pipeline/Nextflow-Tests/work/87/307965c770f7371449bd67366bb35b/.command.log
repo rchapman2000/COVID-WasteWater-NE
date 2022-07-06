@@ -1,0 +1,7 @@
+[E::fai_build3_core] Failed to open the file qbams
+[E::fai_build3] Failed to open the FASTA file qbams
+Usage: freyja demix [OPTIONS] VARIANTS DEPTHS
+Try 'freyja demix --help' for help.
+
+Error: Missing argument 'DEPTHS'.
+cp: cannot stat '*.demix': No such file or directory

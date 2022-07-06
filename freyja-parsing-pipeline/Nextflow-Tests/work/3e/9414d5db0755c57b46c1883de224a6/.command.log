@@ -1,0 +1,17 @@
+WWS-00629q_S27_L001.clipped.bam
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 11, in <module>
+    __import__(dependency)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/__init__.py", line 153, in <module>
+    from . import fft
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/fft/__init__.py", line 203, in <module>
+    from . import _pocketfft, helper
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/fft/_pocketfft.py", line 1018, in <module>
+    def ifft2(a, s=None, axes=(-2, -1), norm=None):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/overrides.py", line 183, in decorator
+    public_api.__code__ = public_api.__code__.replace(
+KeyboardInterrupt

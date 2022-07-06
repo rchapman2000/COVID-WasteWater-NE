@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 1, in <module>
+    import click
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/click/__init__.py", line 7, in <module>
+    from .core import Argument as Argument
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/click/core.py", line 16, in <module>
+    from . import types
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/click/types.py", line 11, in <module>
+    from .exceptions import BadParameter
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/click/exceptions.py", line 85, in <module>
+    class BadParameter(UsageError):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/click/exceptions.py", line 107, in BadParameter
+    param: t.Optional["Parameter"] = None,
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/typing.py", line 309, in inner
+    return cached(*args, **kwds)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/typing.py", line 403, in __getitem__
+    return self._getitem(self, parameters)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/typing.py", line 529, in Optional
+    arg = _type_check(parameters, f"{self} requires a single type.")
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/typing.py", line 168, in _type_check
+    if arg in (Any, NoReturn, Final, TypeAlias):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/typing.py", line 705, in __eq__
+    def __eq__(self, other):
+KeyboardInterrupt

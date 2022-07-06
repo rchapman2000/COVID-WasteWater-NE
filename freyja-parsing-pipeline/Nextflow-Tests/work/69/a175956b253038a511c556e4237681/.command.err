@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 5, in <module>
+    from freyja.sample_deconv import buildLineageMap, build_mix_and_depth_arrays,\
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/sample_deconv.py", line 8, in <module>
+    import matplotlib.pyplot as plt
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/pyplot.py", line 49, in <module>
+    import matplotlib.colorbar
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/colorbar.py", line 21, in <module>
+    from matplotlib import _api, collections, cm, colors, contour, ticker
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/contour.py", line 13, in <module>
+    from matplotlib.backend_bases import MouseButton
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/backend_bases.py", line 46, in <module>
+    from matplotlib import (
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/widgets.py", line 22, in <module>
+    from .patches import Circle, Rectangle, Ellipse
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/patches.py", line 638, in <module>
+    class Shadow(Patch):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 104, in __init_subclass__
+    def __init_subclass__(cls):
+KeyboardInterrupt

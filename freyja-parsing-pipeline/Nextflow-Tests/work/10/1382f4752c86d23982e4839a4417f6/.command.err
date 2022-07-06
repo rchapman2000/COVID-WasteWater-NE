@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 5, in <module>
+    from freyja.sample_deconv import buildLineageMap, build_mix_and_depth_arrays,\
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/sample_deconv.py", line 8, in <module>
+    import matplotlib.pyplot as plt
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/pyplot.py", line 49, in <module>
+    import matplotlib.colorbar
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/colorbar.py", line 21, in <module>
+    from matplotlib import _api, collections, cm, colors, contour, ticker
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/contour.py", line 13, in <module>
+    from matplotlib.backend_bases import MouseButton
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1012, in get_code
+  File "<frozen importlib._bootstrap_external>", line 672, in _compile_bytecode
+KeyboardInterrupt

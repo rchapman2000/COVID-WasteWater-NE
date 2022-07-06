@@ -1,0 +1,23 @@
+WWS-00630q_S28_L001.clipped.bam
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 117, in <module>
+    from pandas.core.computation.api import eval
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/computation/api.py", line 2, in <module>
+    from pandas.core.computation.eval import eval
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/computation/eval.py", line 13, in <module>
+    from pandas.core.computation.engines import ENGINES
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/computation/engines.py", line 12, in <module>
+    from pandas.core.computation.expr import Expr
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/core/computation/expr.py", line 23, in <module>
+    from pandas.core.computation.ops import (
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 879, in exec_module
+  File "<frozen importlib._bootstrap_external>", line 1012, in get_code
+  File "<frozen importlib._bootstrap_external>", line 672, in _compile_bytecode
+KeyboardInterrupt

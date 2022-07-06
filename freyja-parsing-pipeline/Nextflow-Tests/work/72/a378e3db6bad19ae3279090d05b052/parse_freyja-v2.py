@@ -1,0 +1,1 @@
+/home/rchap/Working/freyja-ww-working/freyja-pipeline-nextflow/parse_freyja-v2.py

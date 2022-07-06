@@ -1,0 +1,37 @@
+WWS-00644q_S37_L001.clipped.bam
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 11, in <module>
+    __import__(dependency)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/__init__.py", line 144, in <module>
+    from . import core
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/__init__.py", line 100, in <module>
+    from . import _add_newdocs_scalars
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/core/_add_newdocs_scalars.py", line 9, in <module>
+    import platform
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/platform.py", line 973, in <module>
+    _ironpython_sys_version_parser = re.compile(
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/re.py", line 251, in compile
+    return _compile(pattern, flags)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/re.py", line 303, in _compile
+    p = sre_compile.compile(pattern, flags)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_compile.py", line 764, in compile
+    p = sre_parse.parse(p, flags)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 950, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 836, in _parse
+    p = _parse_sub(source, state, sub_verbose, nested + 1)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 443, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 511, in _parse
+    sourceget()
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 256, in get
+    self.__next()
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/sre_parse.py", line 233, in __next
+    def __next(self):
+KeyboardInterrupt

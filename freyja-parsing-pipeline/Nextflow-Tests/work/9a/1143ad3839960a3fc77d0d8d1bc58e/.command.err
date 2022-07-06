@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 2, in <module>
+    import pandas as pd
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/pandas/__init__.py", line 11, in <module>
+    __import__(dependency)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/__init__.py", line 155, in <module>
+    from . import random
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/random/__init__.py", line 180, in <module>
+    from . import _pickle
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/numpy/random/_pickle.py", line 1, in <module>
+    from .mtrand import RandomState
+  File "mtrand.pyx", line 1, in init numpy.random.mtrand
+  File "bit_generator.pyx", line 40, in init numpy.random.bit_generator
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/secrets.py", line 19, in <module>
+    from random import SystemRandom
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 674, in _load_unlocked
+  File "<frozen importlib._bootstrap>", line 577, in module_from_spec
+  File "<frozen importlib._bootstrap>", line 556, in _init_module_attrs
+  File "<frozen importlib._bootstrap>", line 397, in cached
+  File "<frozen importlib._bootstrap_external>", line 513, in _get_cached
+  File "<frozen importlib._bootstrap_external>", line 417, in cache_from_source
+KeyboardInterrupt

@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/bin/freyja", line 6, in <module>
+    from freyja._cli import cli
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/_cli.py", line 5, in <module>
+    from freyja.sample_deconv import buildLineageMap, build_mix_and_depth_arrays,\
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/freyja/sample_deconv.py", line 8, in <module>
+    import matplotlib.pyplot as plt
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/pyplot.py", line 49, in <module>
+    import matplotlib.colorbar
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/colorbar.py", line 21, in <module>
+    from matplotlib import _api, collections, cm, colors, contour, ticker
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/collections.py", line 1165, in <module>
+    class PolyCollection(_CollectionWithSizes):
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 119, in __init_subclass__
+    cls._update_set_signature_and_docstring()
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 147, in _update_set_signature_and_docstring
+    + kwdoc(cls))
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 1746, in kwdoc
+    ai = ArtistInspector(artist)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 1345, in __init__
+    self.aliasd = self.get_aliases()
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 1358, in get_aliases
+    names = [name for name in dir(self.o)
+  File "/home/rchap/anaconda3/envs/ivar-freyja/lib/python3.10/site-packages/matplotlib/artist.py", line 1360, in <listcomp>
+    and callable(getattr(self.o, name))]
+KeyboardInterrupt
