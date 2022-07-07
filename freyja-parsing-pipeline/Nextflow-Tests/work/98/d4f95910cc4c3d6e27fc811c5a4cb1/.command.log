@@ -1,5 +1,0 @@
-WWS-00645q_S38_L001.clipped.bam
-Exception ignored in: <function _get_module_lock.<locals>.cb at 0x7fde066b0430>
-Traceback (most recent call last):
-  File "<frozen importlib._bootstrap>", line 198, in cb
-KeyboardInterrupt: 
