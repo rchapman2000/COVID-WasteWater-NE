@@ -25,10 +25,58 @@ Additionally, the pipeline has been developed in order to allow new data to be a
 ### Required Files and Formats
 
 #### Master File
+The master file is a CSV file used by the pipeline to link a sample/file name to a Date and Collection Site. Thus it must containg the following columns:
+1. Sample
+2. Site
+3. Date (In the format MM/DD/YYYY)
+4. Week *(Optional - must be present if the --byWeek option is included)*
 
+**(File Header is equired)**
+
+**Example:**
+```
+Sample,Site,Date
+waste-water-01,site01,11/08/2021
+waste-water-02,site01,11/09/2021
+```
 #### Barcode File
+The barcode file is used by Freyja to link a variant to a set of certain nucleotide changes from the WuHan-1 reference. However, new SARS-CoV-2 variants are constantly being discovered, and thus the barcode file that Freyja comes loaded with is out of date. Freyja requires that users manually update their barcode file using a provided command. Because our anlaysis is meant to allow customization the freyja features, we require the user to supply this file. Modifying the Freyja barcode file for S-gene mutations only can be found [above](#Updating-Variant-Profiles).
 
+If you wish to use this pipeline for whole genome analysis, our pipeline still requires the user to supply a barcode file. This can be retrieved using the command:
+```
+freyja update --outDir DIRECTORY
+```
+
+If you wish to make a custom barcode file for another virus or organism, the barcode file must follow the following format guidelines:
+1. Must be in CSV format
+2. Each row represents a variant
+3. Each column represents a nucleotide substitution
+4. Cells are filled with 0 if a variant does not contain that mutation
+5. Cells are filled with a 1 if a variant does contain that mutation
+6. The first column contains variant names
+7. The first row contains nucleotide subsitution names
+
+**Example:**
+```
+,A15T,G25C
+B1,0,1
+B2,1,0
+B3,0,0
+```
 #### Sublineage Map
+The Sublineage Map file is a CSV file which denotes how to group certain subvariants under into parent classifications. The file contains the columns:
+1. Lineage
+2. Label - how to label that lineage (parent)
+
+**(File Header is Required)**
+
+**Example:**
+```
+Lineage,Label
+AY.1,Delta
+BA.1,Omicron
+```
+
 ### Running the Pipeline
 
 The pipeline script can be run using the following command (the included options are required):
