@@ -56,6 +56,12 @@ def main():
     parser.add_argument('-s', '--sublineageMap', required = True, type = str, \
         help = '[Required] - File containing mappings to sublineages to parent lineages', \
         action = 'store', dest = 'sublin')
+    parser.add_argument("--startDate", required=True, type=str, \
+        help="First date of range to be parsed (Date should be in format YYYY-MM-DD)", \
+        action = 'store', dest='startDate')
+    parser.add_argument("--endDate", required=True, type=str, \
+        help="Final date of range to be parsed (Date should be in format YYYY-MM-DD)", \
+        action = 'store', dest='endDate')
 
     args = parser.parse_args()
 
@@ -84,7 +90,7 @@ def main():
     for index, row in filteredMD.iterrows():
         #print(row['Collection date'])
         date = datetime.strptime(row['Collection date'], "%Y-%m-%d")
-        if (date >= datetime.strptime("2021-11-29", "%Y-%m-%d") and date <= datetime.strptime("2022-06-13", "%Y-%m-%d")):
+        if (date >= datetime.strptime(args.startDate, "%Y-%m-%d") and date <= datetime.strptime(args.endDate, "%Y-%m-%d")):
             row['Week'] = (datetime.strptime(row['Collection date'], "%Y-%m-%d") - timedelta(days=date.weekday())).strftime("%m/%d/%Y")
     #print(filteredMD)
     filteredMD = filteredMD[filteredMD['Week'] != '']

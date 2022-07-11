@@ -1,5 +1,28 @@
 #!/usr/bin/env bash
 
+Help()
+{
+    echo "freyja-pipeline.sh - The purpose of this pipeline is to automate the analysis of wastewater data using freyja."
+    echo "                     This pipeline takes a new set of data, analyzes it with freyja and aggregates/parses the data"
+    echo "                     either by itself or with previously run data."
+    echo
+    echo "Usage: freyja-pipeline.sh -i INPUT_DIRECTORY -o OUTPUT_DIRECTORY -d DEMIX_FILE_DIRECTORY -r REFERENCE -m MASTER_FILE -b BARCODE_FILE -s SUBLINEAGE_MAP"
+    echo "Optional arguments [-p FILE_PATTERN | --byWeek | --combineAll | -h]"
+    echo
+    echo "Option Descriptions:"
+    echo "-i | --input INPUT_DIRECTORY - [Required] Directory containing input .bam files. Must be existing"
+    echo "-o | --output OUTPUT_DIRECTORY - [Required] Directory to place pipeline output. This pipeline will create this directory if it does not exist."
+    echo "-d | --demixDir DEMIX_FILE_DIRECTORY - [Required] Directory to place .demix files produced by freyja. The purpose of this option is to allow for aggregation of input files with previously run data. The demix directory may contain .demix files from previous runs, and these will be included in the file output files."
+    echo "-r | --reference REFERENCE - [Required] A reference fasta file to be used (Must be the same reference used to generate the input bam files."
+    echo "-m | --masterfile MASTER_FILE - [Required] A .csv file that links sample names to wastewater sites and collection dates (See Github for format)."
+    echo "-b | --barcode BARCODE_FILE - [Required] A barcode file to be used by Freyja for processing."
+    echo "-s | --sublineageMap SUBLINEAGE_MAP - [Required] A sublineage map file to denote how to collapse lineages produced by Freyja (See Github for format)."
+    echo "-p | --removeFromFile FILE_PATTER - A regex pattern that can be used to remove extraneous text from a sample name."
+    echo "--byWeek - Produces data grouped by week rather than be individual sample collection date."
+    echo "--combineAll - Produces a combined file where lineage abundances from all sites are averaged together for each day/week."
+    echo
+}
+
 OPTIONS=$(getopt -o i:o:d:r:m:b:s:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,sublineageMap:,removeFromFile:,byWeek,combineAll,help -a -- "$@")
 
 INDIR=
@@ -60,7 +83,7 @@ while true; do
         shift 
         ;;
     -h | --help )
-        echo "Add Help Message"
+        Help
         return 0
         ;;
     -- )
@@ -217,6 +240,6 @@ do
 done
 echo ''
 
-mv $FREYJA_DIR*.demix $DEMIXDIR
+cp $FREYJA_DIR*.demix $DEMIXDIR
 
 python3 $SCRIPT_DIR"scripts/parse_freyja-v2.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYWEEK $COMBINEALL
