@@ -94,8 +94,7 @@ wastewatertools freyja_pipeline -i INPUT_DIRECTORY \
 | -d / --demixDir | Directory Path | Directory to place .demix files produced by freyja. The purpose of this option is to allow for aggregation of input files with previously run data. The demix directory may contain .demix files from previous runs, and these will be included in the file output files. | Required |
 | -r / --reference | File | A reference fasta file to be used (Must be the same reference used to generate the input bam files). | Required |
 | -m / --masterfile | File | A .csv file that links sample names to wastewater sites and collection dates ([Format](#master-file)). | Required |
-| -b / --barcode | File | A barcode file to be used by Freyja for processing ([Format](#barcode-file)). If this file is not provided, the default barcode file 
-included in freyja will be updated and used. | Optional |
+| -b / --barcode | File | A barcode file to be used by Freyja for processing ([Format](#barcode-file)). If this file is not provided, the default barcode file included in freyja will be updated and used. | Optional |
 | -s / --sublineageMap | File | A .csv file which denotes how to collapse lineages produced by Freyja ([Format](#sublineage-map)). | Required |
 | -p / --pattern | Text | A regex pattern that can be used to remove extraneous text from a sample name. (Must be enclosed in single quotes) (Example: the pattern '.+?(?=\_S\d*_L\d*)' removes the pattern '_S##_L###' commonly added by illumina sequencers) | Optional |
 | --byWeek | None | Produces data grouped by week rather than be individual sample collection date (Masterfile must include a week column for each sample). | Optional |
