@@ -145,12 +145,11 @@ def parseDemix(file):
 # Calcualtes the average of the list provided.
 #
 # Input:
-#   list - a list containing abundance values for a samples
-#          in a given week.
+#   list - a list containing abundance values for a set of samples
 #
 # Output:
 #   the average of the values in the list for that week.
-def getWeekAverage(list):
+def getAverage(list):
     floatvals = [float(x) for x in list]
     return sum(floatvals) / len(floatvals)
 
@@ -428,11 +427,11 @@ def main():
                     # and insert the average of the week's abundances for that lineage into
                     # the list. The average abundance's position in this list will match the week's
                     # position in the list of weeks.
-                    lngAbunds[ln][weeks.index(w)] = getWeekAverage(wkLngAbunds[ln])
+                    lngAbunds[ln][weeks.index(w)] = getAverage(wkLngAbunds[ln])
 
                     # Create a data entry for the week's lineage and add it to the unfiltered 
                     # dataframe data. The entry containst the week, the lineage, and the average abundance
-                    data = [w, ln, getWeekAverage(wkLngAbunds[ln])]
+                    data = [w, ln, getAverage(wkLngAbunds[ln])]
                     sampleUnfilteredData.append(data)
 
                 # Once all of the average abundances have been calculated for that week, collapses
@@ -444,40 +443,71 @@ def main():
                 unfilteredData = unfilteredData + sampleUnfilteredData
         
         # The user did not specify that data to be grouped by weeks. Thus,
-        # it will be grouped by individual sample in each site.
+        # it will be grouped by individual collection dates in each site.
         else:
-            # For every sample in the site, parse the .demix file to grab lineages and
-            # abundances present in the file. Then adds the lineage to a dictionary pairing
-            # a lineage to a list of abundances.
-            for sample in samples:
-                lngs, abunds = parseDemix(indir + sampleToFile[sample] + ".demix")
-                sampleUnfilteredData = []
+            dates = []
+            if (site == 'All'):
+                dates = master['Date'].drop_duplicates().values.tolist()
+            else:
+                dates = master.loc[master['Site'] == site]['Date'].drop_duplicates().values.tolist()
 
-                # Loops over the lineages found in the file.
-                for ln in lngs:
+            # Loop over every date for this site and calculate the lineages and abundances
+            # found in samples collected that date.
+            for d in dates:
 
-                    # If the lineage is not already in the dictionary,
-                    # create a new list to store abundances for that lineage.
-                    # The list will be the length of the number of samples in this site
-                    # and will initially be filled with zeroes.
+                # For each date, grab all of the samples found for the given site and date.
+                dateSamples = []
+                if (site == 'All'):
+                    dateSamples = master.loc[(master['Date'] == d)].Sample.tolist()
+                else:
+                    dateSamples = master.loc[(master['Date'] == d) & (master['Site'] == site)].Sample.tolist()
+
+                # For every sample in the week, parse the .demix file to grab lineages and
+                # abundances present in the file. Then adds the lineage to a dictionary pairing
+                # a lineage to a list of abundances.
+                dtLngAbunds = {}
+                for sample in dateSamples:
+                    lngs, abunds = parseDemix(indir + sampleToFile[sample] + ".demix")
+                    sampleUnfilteredData = []
+                    # Loop over every lineage found in the file.
+                    for ln in lngs:
+                        # If the lineage is not already in the dictionary,
+                        # create a new list to store abundances for that lineage.
+                        # The list will be the length of the number of samples in this week
+                        # and will initially be filled with zeroes.
+                        if ln not in dtLngAbunds.keys():
+                            dtLngAbunds[ln] = [0 for i in range(0, len(dateSamples))]
+
+                        # Grab the list of abundances associated with the given lineage
+                        # and insert the current sample's abundance. The abundance's position in
+                        # this list will matcht the sample's position in the list of samples
+                        # for the given week.
+                        dtLngAbunds[ln][dateSamples.index(sample)] = abunds[lngs.index(ln)]
+                
+                # Loops overa ll of the lineages found for that date
+                for ln in dtLngAbunds.keys():
+                    # If the lineage has not been added yet, create an empty list 
+                    # of the same length as the number of dates in the site. The list will be filled
+                    # with zeros.
                     if ln not in lngAbunds.keys():
-                        lngAbunds[ln] = [0 for i in range(0, len(samples))]    
-
+                        lngAbunds[ln] = [0 for i in range(0, len(dates))]
+                    
                     # Grab the list of abundances associated with the given lineage
-                    # and insert its abundance into the list. The abundance's
-                    # position in this list will match the week's position in the list of weeks.
-                    lngAbunds[ln][samples.index(sample)] = abunds[lngs.index(ln)]
+                    # and insert the average of the date's abundances for that lineage into
+                    # the list. The average abundance's position in this list will match the date's
+                    # position in the list of weeks.
+                    lngAbunds[ln][dates.index(d)] = getAverage(dtLngAbunds[ln])
 
-                    # Create a data entry for the lineage and add it to the unfiltered 
-                    # dataframe data. The entry containst the sample, the lineage, and the abundance.
-                    data = [master.loc[master['Sample'] == sample].Date.values[0], ln, abunds[lngs.index(ln)]]
+                    # Create a data entry for the week's lineage and add it to the unfiltered 
+                    # dataframe data. The entry containst the date, the lineage, and the average abundance
+                    data = [d, ln, getAverage(dtLngAbunds[ln])]
                     sampleUnfilteredData.append(data)
 
-                # Once all of the average abundances have been calculated for that sample, collapses
+                # Once all of the average abundances have been calculated for that date, collapses
                 # the lineages and adds that to the master filtered dataframe data. 
                 # Also, appends the unfiltered data for the given sample to the master unfiltered
                 # dataframe data. 
-                collapsedlngs = collapseLineages(master.loc[master['Sample'] == sample].Date.values[0], sampleUnfilteredData, abunCutoff, sublinMap)
+                collapsedlngs = collapseLineages(d, sampleUnfilteredData, abunCutoff, sublinMap)
                 filteredData = filteredData + collapsedlngs
                 unfilteredData = unfilteredData + sampleUnfilteredData
         

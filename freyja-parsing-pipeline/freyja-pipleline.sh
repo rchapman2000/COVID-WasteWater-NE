@@ -242,4 +242,4 @@ echo ''
 
 cp $FREYJA_DIR*.demix $DEMIXDIR
 
-python3 $SCRIPT_DIR"scripts/parse_freyja-v2.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYWEEK $COMBINEALL
+python3 $SCRIPT_DIR"scripts/parse_freyja.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYWEEK $COMBINEALL
