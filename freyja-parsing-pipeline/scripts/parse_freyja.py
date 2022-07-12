@@ -273,7 +273,7 @@ def main():
         action = 'store', dest = 'indir')
     parser.add_argument('-o', '--output', required = True, type=str, \
         help='[Required] - Directory to place output files', action='store', dest='outdir')
-    parser.add_argument('-s', '--sublineageMap', required = True, type = str, \
+    parser.add_argument('-s', '--sublineageMap', required = False, type = str, \
         help = '[Required] - File containing mappings to sublineages to parent lineages', \
         action = 'store', dest = 'sublin')
     parser.add_argument('-m', '--mastersheet',required=True, type=str, \

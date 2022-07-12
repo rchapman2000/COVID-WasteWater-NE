@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+Help() {
+    echo ""
+    echo "Wastewater Tools"
+    echo "Usage: wastewatertools <module> [module options]"
+    echo ""
+    echo "Modules:"
+    echo ""
+    echo "  - freyja_pipeline"
+    echo "  - MORE TO BE ADDED"
+    echo ""
+    echo "To view this message:"
+    echo "  wastewatertools -h"
+    echo ""
+    echo "To view module help messages:"
+    echo "  amplify <module> -h"
+    echo ""
+}
+SCRIPT_DIR=$(dirname ${BASH_SOURCE})
+
+if [ "$1" = freyja_pipeline ]; then
+    "$SCRIPT_DIR"/freyja-parsing-pipeline/freyja-pipeline.sh ${@:2}
+#elif [ "$1" = calcDepth ]; then
+    #python "$SCRIPT_DIR"/ampLify-modules/calcDepth.py ${@:2}
+#elif [ "$1" = generateConsensus ]; then
+    #python "$SCRIPT_DIR"/ampLify-modules/generateConsensus.py ${@:2}
+elif [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+    Help
+else 
+    echo "Module "$1" does not exist"
+    Help
+fi
