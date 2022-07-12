@@ -37,12 +37,9 @@ waste-water-01,site01,11/08/2021
 waste-water-02,site01,11/09/2021
 ```
 #### Barcode File
-The barcode file is used by Freyja to link a variant to a set of certain nucleotide changes from the WuHan-1 reference. However, new SARS-CoV-2 variants are constantly being discovered, and thus the barcode file that Freyja comes loaded with is out of date. Freyja requires that users manually update their barcode file using a provided command. Because our anlaysis is meant to allow customization the freyja features, we require the user to supply this file. Modifying the Freyja barcode file for S-gene mutations only can be found [above](#Updating-Variant-Profiles).
+The barcode file is used by Freyja to link a variant to a set of certain nucleotide changes from the WuHan-1 reference. However, new SARS-CoV-2 variants are constantly being discovered, and thus the barcode file that Freyja comes loaded with is out of date. Freyja requires that users manually update their barcode file using a provided command. If no barcode file is supplied to the pipeline, the ```freyja update``` command will be run prior to analysis to ensure that the barcode file is up to date.
 
-If you wish to use this pipeline for whole genome analysis, our pipeline still requires the user to supply a barcode file. This can be retrieved using the command:
-```
-freyja update --outDir DIRECTORY
-```
+Wastewater tools also includes a way to generate an updated barcode file including only S gene mutations (See [Creating S Gene Variant Profiles](#creating-s-gene-variant-profiles)).
 
 If you wish to make a custom barcode file for another virus or organism, the barcode file must follow the following format guidelines:
 1. Must be in CSV format
