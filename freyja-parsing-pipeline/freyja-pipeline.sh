@@ -24,6 +24,12 @@ Help()
 }
 
 OPTIONS=$(getopt -o i:o:d:r:m:b:s:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,sublineageMap:,removeFromFile:,byWeek,combineAll,help -a -- "$@")
+if [ $? -ne 0 ]
+then
+    echo ""
+    Help
+    exit 1
+fi
 
 INDIR=
 OUTDIR=
@@ -84,11 +90,15 @@ while true; do
         ;;
     -h | --help )
         Help
-        exit 0
+        exit 1
         ;;
     -- )
         shift
         break
+        ;;
+    * )
+        Help
+        exit 1
         ;;
   esac
 done
@@ -174,7 +184,7 @@ then
     exit 1
 elif [ ! -f "$REF" ]
 then
-    echo "File $REF does not exist. Please include an existing file and check the path provided (-r/--reference)!"
+    echo "File $CURRENTDIR$REF does not exist. Please include an existing file and check the path provided (-r/--reference)!"
     echo ''
     exit 1
 fi
@@ -246,5 +256,4 @@ done
 echo ''
 
 cp $FREYJA_DIR*.demix $DEMIXDIR
-
 python3 $SCRIPT_DIR"scripts/parse_freyja.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYWEEK $COMBINEALL
