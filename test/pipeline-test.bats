@@ -4,7 +4,7 @@ setup() {
 
     TESTDIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
 
-    PATH="$TESTDIR/../freyja-parsing-pipeline:$PATH"
+    PATH="$TESTDIR/../bin:$PATH"
 
     VALIDINDIR=$TESTDIR/pipeline-test-files/inDir/
     VALIDOUTDIR=$TESTDIR/pipeline-test-files/outDir
@@ -31,6 +31,16 @@ setup() {
 @test "Show error when no options provided" {
     run freyja-pipeline.sh
     assert_output --partial 'No input directory provided. Please include an input directory (-i/--input)!'
+}
+@test "Show error when invalid option is provided" {
+    # Option 'intput' supplied intead of input
+    run freyja-pipeline.sh --intput $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN
+    assert_output --partial "getopt: unrecognized option '--intput'"
+    assert_output --partial "freyja-pipeline.sh - The purpose of this pipeline is to automate the analysis of wastewater data using freyja."
+
+    run freyja-pipeline.sh -q --intput $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN
+    assert_output --partial "getopt: unrecognized option '-q'"
+    assert_output --partial "freyja-pipeline.sh - The purpose of this pipeline is to automate the analysis of wastewater data using freyja."
 }
 
 @test "Show error when no input directory provided" {
