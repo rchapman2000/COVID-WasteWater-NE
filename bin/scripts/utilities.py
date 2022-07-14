@@ -35,14 +35,21 @@ def parseDirectory(d):
         # If the directory does not exist, exit the script and notify the user.
         sys.exit("ERROR: Directory {0} does not exist!".format(d))
 
-def parseCSVToDF(f, d):
+def parseCSVToDF(f, d, header):
     if os.path.exists(f):
-        return pd.read_csv(f, delimiter=d, header=0)
+        if header:
+            return pd.read_csv(f, delimiter=d, header=0)
+        else:
+            return pd.read_csv(f, delimiter=d)
     else:
         sys.exit("ERROR: File {0} does not exist!".format(f))
 
-def parsedDate(d):
-    return dt
+def parseDate(d,f):
+    try:
+        toReturn = dt.strptime(d, f)
+        return toReturn
+    except ValueError:
+         sys.exit("Error: Date {0} not provided in correct format".format(d))
 
 #### collapseLineages:
 #
@@ -64,7 +71,7 @@ def collapseLineages(sample, unfiltData, cutoff, map):
     # which maps the lineage to the abundance
     for row in unfiltData:
         # If the abundance is above the specified cutoff, do not collapse it.
-        if float(row[2]) >= cutoff:
+        if float(row[2]) >= float(cutoff):
             filteredDict[row[1]] = [row[2]]
         # If the abundance is below the cutoff, collapse it into the
         # specified parent lineage.

@@ -5,10 +5,8 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import unittest
-import subprocess
+import subprocess as sp
 import pandas as pd
-
-from bin.scripts.parse_gisaid_data import collapseLineages, writeDataFrame
 
 # A quick function to read in a csv. Loops over every line in
 # the csv files and places the data into a list. Then returns a
@@ -29,58 +27,16 @@ def readCSVToList(file):
 
 
 class TestPatientDataParse(unittest.TestCase):
-    
-    # A unit test for the collapse lineages function of the gisaid parser.
-    def test_collapseLineages(self):
-        # Creates data for a test input
-        sample = "Sample1"
-        unfiltData = readCSVToList(SCRIPT_DIR + "/patient-data-test-files/test-unfiltered-data.csv")
-        map = pd.read_csv(SCRIPT_DIR + "/patient-data-test-files/sublin-test.csv")
-
-        # Creates a list representing what the output should looklike
-        correct_results = [["Sample1", "Delta", "0.7"], ["Sample1", "Not a VOC", "0.3"]]
-
-        result = collapseLineages(sample, unfiltData, map)
-
-        # Test passes if the result of collapse lineages matches the
-        # correct (intended) result
-        self.assertEqual(result, correct_results)
-
-
-    # A unit test for the write dataframe function of the gisaid parser.
-    def test_writeDataFrame(self):
-
-        # Creates data for test input
-        outfile = SCRIPT_DIR + "/patient-data-test-files/testOut"
-        data = [["SampleX", "Delta", "1.0"]]
-        header= "Sample,Lineage,Abundance\n"
-
-        writeDataFrame(data, outfile, header)
-
-        # Checks to make sure that the output file was created
-        self.assertTrue(os.path.exists(outfile + ".csv"))
-
-        # Opens the output file 
-        f = open(outfile + ".csv", "r")
-        # Checks that the first line is a header
-        self.assertEqual(f.readline(), "Sample,Lineage,Abundance\n")
-        # Checks that hte following line matches what should have been
-        # produced given the data
-        self.assertEqual(f.readline(), "SampleX,Delta,1.0\n")
-
-        # Closes the filestream and deletes the file.
-        f.close()
-        os.remove(outfile + ".csv")
 
     # A unit test to test the entire script runs with the --byWeek option supplied (grouping by week).
     # The script is run given a set of parameters and the output is compared to existing output files containing
     # the anticipated result.
-    def test_scriptByWeek(self):
+    def test_scriptByWeek_collapse_all(self):
         # Sets the command and runs it using subprocess
         cmd = "python3 {0}/../bin/scripts/parse_gisaid_data.py -i {0}/patient-data-test-files/metadata-test.tsv " \
         "-o {0}/patient-data-test-files/testOut --sublineageMap {0}/patient-data-test-files/sublin-test2.csv " \
         "--startDate 2021-11-29 --endDate 2022-06-20 --byWeek".format(SCRIPT_DIR)
-        subprocess.run(cmd,check=True, stdout=subprocess.PIPE, stderr=sys.stdout, shell=True)
+        sp.run(cmd,check=True, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
 
         # Tests to ensure that the correct output files have been created:
         #   - a filtered dataframe
@@ -106,12 +62,12 @@ class TestPatientDataParse(unittest.TestCase):
     # A unit test to test that hte entire script runs defaultly (grouping by date).
     # The script is run given a set of parameters and the output is compared to existing output files containing
     # the anticipated result.
-    def test_scriptByDate(self):
+    def test_scriptByDate_collapse_all(self):
         # Sets the command and runs it using subprocess
         cmd = "python3 {0}/../bin/scripts/parse_gisaid_data.py -i {0}/patient-data-test-files/metadata-test.tsv " \
         "-o {0}/patient-data-test-files/testOut --sublineageMap {0}/patient-data-test-files/sublin-test2.csv " \
         "--startDate 2021-11-29 --endDate 2022-06-20".format(SCRIPT_DIR)
-        subprocess.run(cmd,check=True, stdout=subprocess.PIPE, stderr=sys.stdout, shell=True)
+        sp.run(cmd,check=True, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
 
         # Tests to ensure that the correct output files have been created:
         #   - a filtered dataframe
@@ -129,11 +85,34 @@ class TestPatientDataParse(unittest.TestCase):
         self.assertEqual(correctFilt, outFilt)
         # Compares the correct unfiltered dataframe to the data output by the command
         self.assertEqual(correctUnfilt, outUnfilt)
-        
+
         # Removes the output files created
         os.remove(SCRIPT_DIR + "/patient-data-test-files/testOut-filtered-dataframe.csv")
         os.remove(SCRIPT_DIR + "/patient-data-test-files/testOut-unfiltered-dataframe.csv")
 
+    def test_script_end_date_before_start_date(self):
+        startDate = "2021-01-01"
+        endDate = "2020-01-01"
+
+        expected_error = "ERROR: The provided end date, {0}, comes before the provided start date, {1}".format(endDate, startDate)
+        with self.assertRaises(sp.CalledProcessError) as cm:
+            # Sets the command and runs it using subprocess
+            cmd = "python3 {0}/../bin/scripts/parse_gisaid_data.py -i {0}/patient-data-test-files/metadata-test.tsv " \
+            "-o {0}/patient-data-test-files/testOut --sublineageMap {0}/patient-data-test-files/sublin-test2.csv " \
+            "--startDate {1} --endDate {2}".format(SCRIPT_DIR, startDate, endDate)
+            sp.run(cmd, check=True, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+            self.assertEqual(cm.exception.message, expected_error)
+
+    def test_script_abundance_greater_than_one(self):
+        cutoff = 20
+        expected_error = "ERROR: The abundance cutoff povided, {0}, is not a decimal betwen 0 and 1.".format(cutoff)
+
+        with self.assertRaises(sp.CalledProcessError) as cm:
+            cmd = "python3 {0}/../bin/scripts/parse_gisaid_data.py -i {0}/patient-data-test-files/metadata-test.tsv " \
+            "-o {0}/patient-data-test-files/testOut --sublineageMap {0}/patient-data-test-files/sublin-test2.csv " \
+            "--startDate 2021-11-29 --endDate 2022-06-20 --abundanceThreshold {1}".format(SCRIPT_DIR, cutoff)
+            sp.run(cmd,check=True, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
+            self.assertEqual(cm.exception.message, expected_error)
 
 
 if __name__ == "__main__":

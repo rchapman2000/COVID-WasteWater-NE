@@ -1,16 +1,32 @@
 import os
 import sys
+
 # Sets the path so that the scripts can be imported
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 import unittest
 import pandas as pd
+from datetime import datetime as dt
 
 from bin.scripts.utilities import parseDirectory, \
-     parseCSVToDF, collapseLineages, writeDataFrame
+     parseDate, parseCSVToDF, collapseLineages, writeDataFrame
 
 TEST_FILE_DIR = SCRIPT_DIR + "/utilities-test"
+
+def readCSVToList(file):
+    # Open the file
+    f = open(file, "r")
+    # Creates an empty list to store each line
+    list = []
+    for line in f:
+        # Removes the newline character and splits the file 
+        # into a list at the commas
+        ls = line.strip("\n").split(",")
+        # Adds the line to the master list
+        list.append(ls)
+    f.close()
+    return list
 
 class TestUtilityFunctions(unittest.TestCase):
 
@@ -41,14 +57,65 @@ class TestUtilityFunctions(unittest.TestCase):
 
     def test_parseCSVToDF_valid(self):
         df_path = TEST_FILE_DIR + '/file.csv'
-        self.assertIsInstance(parseCSVToDF(df_path, ","), pd.DataFrame)
+        self.assertIsInstance(parseCSVToDF(df_path, ",", True), pd.DataFrame)
     
     def test_parseCSVToDF_invalid(self):
         invalid_file = TEST_FILE_DIR + "/non-existent.csv"
         expected_error = "ERROR: File {0} does not exist!".format(invalid_file)
         with self.assertRaises(SystemExit) as cm:
-            parseCSVToDF(invalid_file, ",")
+            parseCSVToDF(invalid_file, ",", True)
             self.assertEqual(cm.exception, expected_error)
+
+    def test_parseDate_valid(self):
+        str = "2022-01-20"
+        fmt = "%Y-%m-%d"
+
+        expected = dt(2022, 1, 20)
+
+        self.assertEqual(parseDate(str, fmt), expected)
+
+    def test_parseDate_invalid(self):
+        str = "01-01-2022"
+        fmt = "%Y-%m-%d"
+
+        expected_error= "Error: Date {0} not provided in correct format".format(str)
+        with self.assertRaises(SystemExit) as cm:
+            parseDate(str, fmt)
+            self.assertEqual(cm.exception, expected_error)
+
+    def test_collapseLineages_collapse_all(self):
+        # Creates data for a test input
+        sample = "Sample1"
+        unfiltData = readCSVToList(TEST_FILE_DIR + "/test-unfiltered-data.csv")
+        map = pd.read_csv(TEST_FILE_DIR + "/sublin-test.csv")
+        cutoff = 100
+
+        # Creates a list representing what the output should looklike
+        correct_results = [["Sample1", "Delta", "0.7"], \
+            ["Sample1", "Not a VOC", "0.3"]]
+
+        result = collapseLineages(sample, unfiltData, cutoff, map)
+
+        # Test passes if the result of collapse lineages matches the
+        # correct (intended) result
+        self.assertEqual(result, correct_results)
+
+    def test_collapseLineages_collapse_all(self):
+        # Creates data for a test input
+        sample = "Sample1"
+        unfiltData = readCSVToList(TEST_FILE_DIR + "/test-unfiltered-data.csv")
+        map = pd.read_csv(TEST_FILE_DIR + "/sublin-test.csv")
+        cutoff = 0.5
+
+        # Creates a list representing what the output should looklike
+        correct_results = [["Sample1", "Delta", "0.2"], \
+            ["Sample1", "AY.10", "0.5"], ["Sample1", "Not a VOC", "0.3"]]
+
+        result = collapseLineages(sample, unfiltData, cutoff, map)
+
+        # Test passes if the result of collapse lineages matches the
+        # correct (intended) result
+        self.assertEqual(result, correct_results)
 
     def test_writeDataFrame(self):
 

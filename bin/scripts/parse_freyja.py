@@ -266,7 +266,7 @@ def main():
     # Creates an argument parser and defines the possible arguments
     # that can be taken.
     parser = argparse.ArgumentParser( \
-        usage = "python3 parse_freyja-v2.py -i INPUT_DIRECTORY -o OUTPUT_DIRECTORY --sublineageMap SUBLINEAGE_MAP --mastersheet MASTER_SHEET [options]")
+        usage = "python3 parse_freyja.py")
 
     parser.add_argument('-i', '--input', required = True, type=str, \
         help='[Required] - path to folder containing \'.demix\' files produced by Freyja', \

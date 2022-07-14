@@ -8,13 +8,15 @@ Help() {
     echo "Modules:"
     echo ""
     echo "  - freyja_pipeline"
+    echo "  - parse_gisaid"
+    echo "  - s_gene_barcodes"
     echo "  - MORE TO BE ADDED"
     echo ""
     echo "To view this message:"
     echo "  wastewatertools -h"
     echo ""
     echo "To view module help messages:"
-    echo "  amplify <module> -h"
+    echo "  wastewatertools <module> -h"
     echo ""
 }
 SRC_DIR=$(dirname ${BASH_SOURCE})
@@ -23,6 +25,8 @@ if [ "$1" = freyja_pipeline ]; then
     "$SRC_DIR"/bin/freyja-pipeline.sh ${@:2}
 elif [ "$1" = parse_gisaid ]; then
     python3 "$SRC_DIR"/bin/scripts/parse_gisaid_data.py ${@:2}
+elif [ "$1" = s_gene_barcodes ]; then
+    python3 "$SRC_DIR"/bin/scripts/s_gene_barcodes.py ${@:2}
 elif [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     Help
 else 
