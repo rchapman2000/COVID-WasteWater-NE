@@ -1,12 +1,12 @@
 # COVID-WasteWater-NE
 The purpose of this repository is to house scripts for the automation of SARS-CoV-2 wastewater surveillance processing in Nebraska. Specifically, the anlaysis presented was tested and used on illumina sequencing data produced using the IDT [xGen SARS-CoV-2 Sgene amplicon sequencing panel](https://www.idtdna.com/pages/products/next-generation-sequencing/workflow/xgen-ngs-amplicon-sequencing/predesigned-amplicon-panels/sars-cov-2-amp-panel#product-details) (previously produced by Swift BioSciences) as this is a cheaper and scalable alternative to whole-genome sequencing of wastewater. 
 
-The tool present in this repository, Wastewater Tools, contains a set of bioinformatics scripts related to the processing of wastewater data. The intended analysis makes use of the existing tool [Freyja](https://github.com/andersen-lab/Freyja) ([Karthikeyan et al., 2022](https://www.nature.com/articles/s41586-022-05049-6)). Since Freyja was developed for whole-genome sequencing, our scripts and pipeline adapt this approach for S-gene only. Additionally, our scripts parse the freyja output data into a format which can be more easily vizualized. 
+The tool present in this repository, **Wastewater Tools**, contains a set of bioinformatics scripts related to the processing of wastewater data. The intended analysis makes use of the existing tool [Freyja](https://github.com/andersen-lab/Freyja) ([Karthikeyan et al., 2022](https://www.nature.com/articles/s41586-022-05049-6)). Since Freyja was developed for whole-genome sequencing, our scripts and pipeline adapt this approach for S-gene only. Additionally, our scripts parse the freyja output data into a format which can be more easily vizualized. 
 
-## Installation
+# Installation
 **Under Development**
 
-## Pre-Processing of Sequencing Data
+# Pre-Processing of Sequencing Data
 Before running our pipeline, NGS data must undergo preprocessing. The necessary steps include:
 1. Read Quality Control and Trimming
 2. Primer Clipping (utilizing the [Primerclip](https://github.com/swiftbiosciences/primerclip#readme) software built to handle the xGen amplicon primers)
@@ -14,14 +14,16 @@ Before running our pipeline, NGS data must undergo preprocessing. The necessary 
 
 This repository does not currently contain a script or pipeline that can be used for preprocessing. We recommend using the [TAYLOR Pipeline](https://github.com/greninger-lab/covid_swift_pipeline) developed by the Greninder Lab for IDT xGen amplicon sequencing data. The pipeline will produce .bam alignment files that can be used as input for our pipelines.
 
-## Freyja-Pipeline
-The Freyja pipeline takes .bam alignment files of NGS sequencing reads, and runs them through Freyja which performs variant calling and estimates the abundances of viral variants present within the sample. The estimates produced by Freyja are then parsed to create files that can be used for visualization.
+# Modules
+Wastewater tools contains several different modules pertinent to the analysis of wastewater data. These modules include
+- Freyja Pipeline - automates the process of running wastewater data through Freyja and parsing of Freyja output into an analyzeable format. Additionally, it can combine newly processed data with previous runs to create a continuous data output.
+- S-Gene Barcode Creation - Freyja's classification barcode file is built for whole genome sequencing. This function parses Freyja's barcodes, producing a barcode file containing only S-gene mutations and lineages distinguishable by the S-gene
+- Gisaid Metadata Parser - Can take a set of Gisaid metadata and generate a visualizeable data format similar to the output of the freyja pipeline. This allows for direct comparison of wastewater and patient data.
 
-Additionally, the pipeline has been developed in order to allow new data to be aggregated with others. This functionality is particularly useful for maintaining a consistent schedule of wastewater surveillance without the need to re-run previously analyzed data through Freyja. 
+## Required and Optional File Formats
+Many of the modules of wastewater tools require input files of differing formats. This section details the purpose and format of each.
 
-### Required Files and Formats
-
-#### Master File
+### Master File
 The master file is a CSV file used by the pipeline to link a sample/file name to a Date and Collection Site. Thus it must containg the following columns:
 1. Sample
 2. Site
@@ -36,10 +38,10 @@ Sample,Site,Date
 waste-water-01,site01,11/08/2021
 waste-water-02,site01,11/09/2021
 ```
-#### Barcode File
+### Barcode File
 The barcode file is used by Freyja to link a variant to a set of certain nucleotide changes from the WuHan-1 reference. However, new SARS-CoV-2 variants are constantly being discovered, and thus the barcode file that Freyja comes loaded with is out of date. Freyja requires that users manually update their barcode file using a provided command. If no barcode file is supplied to the pipeline, the ```freyja update``` command will be run prior to analysis to ensure that the barcode file is up to date.
 
-Wastewater tools also includes a way to generate an updated barcode file including only S gene mutations (See [Creating S Gene Variant Profiles](#creating-s-gene-variant-profiles)).
+Wastewater tools also includes a way to generate an updated barcode file including only S-gene mutations (See [Creating S-Gene Variant Profiles](#creating-s-gene-variant-profiles)).
 
 If you wish to make a custom barcode file for another virus or organism, the barcode file must follow the following format guidelines:
 1. Must be in CSV format
@@ -57,7 +59,7 @@ B1,0,1
 B2,1,0
 B3,0,0
 ```
-#### Sublineage Map
+### Sublineage Map
 The Sublineage Map file is a CSV file which denotes how to group certain subvariants under into parent classifications. The file contains the columns:
 1. Lineage
 2. Label - how to label that lineage (parent)
@@ -70,6 +72,10 @@ Lineage,Label
 AY.1,Delta
 BA.1,Omicron
 ```
+## Freyja Pipeline Module
+The Freyja pipeline takes .bam alignment files of NGS sequencing reads, and runs them through Freyja which performs variant calling and estimates the abundances of viral variants present within the sample. The estimates produced by Freyja are then parsed to create files that can be used for visualization.
+
+Additionally, the pipeline has been developed in order to allow new data to be aggregated with others. This functionality is particularly useful for maintaining a consistent schedule of wastewater surveillance without the need to re-run previously analyzed data through Freyja. 
 
 ### Running the Pipeline
 
@@ -121,10 +127,30 @@ Inside of the output directory the matrix and dataframe files are the primary ou
    - **unfiltered dataframe** - a dataframe file where no lineages have been collapsed based on the sublineage map.
    - **filtered dataframe** - a dataframe file containg the lineages combined into their parent based on the sublineage map.
 
-## Creating S Gene Variant Profiles
-**Under Development**
+## S-Gene Barcode Module
+Because Freyja is built for whole genome sequencing, the barcode file that is uses to classify lineages from nucleotide changes includes mutations throughout the SARS-CoV-2 genome. In order for the tool to process S-Gene sequencing data, the extraneous mutations must be removed from this barcode file. Additionally, some variants cannot be distinguished from one another based on S-Gene mutations. Thus, the entries for these variants must be combined.
 
-## Parsing Gisaid Sequences to generate patient Data
+### Running the S-Gene Barcode Module
+To create an S-Gene barcode file, the following command can be run:
+```
+wastewatertools s_gene_barcodes -o OUTPUT_DIRECTORY [options]
+```
+
+Because Freyja requires manual updating of its barcode files, **no input is necessary for this function**. It simply runs Freyja's update function and accesses the output directly. 
+
+However, in the case that you wish to use an existing barcode file, you may supply this via the **--input parameter**. Be sure that it adheres to the [Barcode File Format](#barcode-file).
+
+Additionally, note that this module **filters out proposed lineages, misc lineages, and hybrid lineages by default**. This can be avoided by supplying the ```--noFilt``` option (See below).
+
+### Options
+
+| Option | Argument | Description | Requirement |
+| ------ | -------- | ----------- | -------- |
+| -o / --outdir | Directory Path | Directory to place output files | Required |
+| -i / --input | File | If you wish to convert an existing barcode file into one containing only S-Gene mutations, a barcode file can be supplied as input. (NOTE: the module will skip the ```freyja update``` command) | Optional |
+| --noFilt | None | Supplying this option will tell the module to keep proposed, misc, and hybrid lineages in the output barcode file (as this is not default behavior) | Optional |
+
+## Parsing Gisaid Sequences to Generate Patient Data
 **Under Development**
 
 ## Visualiation
