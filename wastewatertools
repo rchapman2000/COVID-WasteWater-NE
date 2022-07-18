@@ -8,9 +8,9 @@ Help() {
     echo "Modules:"
     echo ""
     echo "  - freyja_pipeline"
+    echo "  - parse_freyja_data"
     echo "  - parse_gisaid"
     echo "  - s_gene_barcodes"
-    echo "  - MORE TO BE ADDED"
     echo ""
     echo "To view this message:"
     echo "  wastewatertools -h"
@@ -23,6 +23,8 @@ SRC_DIR=$(dirname ${BASH_SOURCE})
 
 if [ "$1" = freyja_pipeline ]; then
     "$SRC_DIR"/bin/freyja-pipeline.sh ${@:2}
+elif [ "$1" = parse_freyja_data ]; then
+    "SRC_DIR"/bin/scripts/parse_freyja.py ${@:2}
 elif [ "$1" = parse_gisaid ]; then
     python3 "$SRC_DIR"/bin/scripts/parse_gisaid_data.py ${@:2}
 elif [ "$1" = s_gene_barcodes ]; then

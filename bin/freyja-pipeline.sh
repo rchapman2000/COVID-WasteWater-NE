@@ -80,7 +80,7 @@ while true; do
         shift 2
         ;;
     -p | --removeFromFile )
-        PATTERN="--removeFromFile $2"
+        PATTERN="--pattern $2"
         shift 2
         ;;
     --byDate )

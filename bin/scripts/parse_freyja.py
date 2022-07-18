@@ -285,7 +285,7 @@ def main():
     parser.add_argument('-m', '--mastersheet',required=True, type=str, \
         help = "[Required] - Mastersheet that can be used to link samples to their date and site", action = 'store', \
         dest='master')
-    parser.add_argument('--removeFromFile', required=False, type=str, \
+    parser.add_argument('-p', '--pattern', required=False, type=str, \
         help = "A regex pattern that can be used to remove extraneous info from file name to derive the sample name", \
         action = 'store', dest = 'filePattern')
     parser.add_argument("--byDate", required=False, \

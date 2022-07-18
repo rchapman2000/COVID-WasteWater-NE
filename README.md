@@ -17,6 +17,7 @@ This repository does not currently contain a script or pipeline that can be used
 # Modules
 Wastewater tools contains several different modules pertinent to the analysis of wastewater data. These modules include
 - Freyja Pipeline - automates the process of running wastewater data through Freyja and parsing of Freyja output into an analyzeable format. Additionally, it can combine newly processed data with previous runs to create a continuous data output.
+- Parse Freyja Data - a standalone parser of freyja data. While this feature is included in the freyja pipeline. It is often helpful to parse the same set of data in multiple different ways (such as grouped by both date and week).
 - S-Gene Barcode Creation - Freyja's classification barcode file is built for whole genome sequencing. This function parses Freyja's barcodes, producing a barcode file containing only S-gene mutations and lineages distinguishable by the S-gene
 - Gisaid Metadata Parser - Can take a set of Gisaid metadata and generate a visualizeable data format similar to the output of the freyja pipeline. This allows for direct comparison of wastewater and patient data.
 
@@ -100,7 +101,8 @@ wastewatertools freyja_pipeline -i INPUT_DIRECTORY \
 | -b / --barcode | File | A barcode file to be used by Freyja for processing ([Format](#barcode-file)). If this file is not provided, the default barcode file included in freyja will be updated and used. | Optional |
 | -s / --sublineageMap | File | A .csv file which denotes how to collapse lineages produced by Freyja ([Format](#sublineage-map)). | Required |
 | -p / --pattern | Text | A regex pattern that can be used to remove extraneous text from a sample name. (Must be enclosed in single quotes) (Example: the pattern '.+?(?=\_S\d*_L\d*)' removes the pattern '_S##_L###' commonly added by illumina sequencers) | Optional |
-| --byWeek | None | Produces data grouped by week rather than be individual sample collection date (Masterfile must include a week column for each sample). | Optional |
+| --byDate| None | Produces data grouped by date rather than by individual sample (Masterfile must include a date column for each sample). | Optional (Cannot include both --byDate and --byWeek) |
+| --byWeek | None | Produces data grouped by week rather than buy individual sample (Masterfile must include a week column for each sample). | Optional (Cannot include both --byDate and --byWeek) |
 | --combineAll | None | Produces a combined file where lineage abundances from all sites are averaged together for each day/week. | Optional |
 
 ### Pipeline Output
@@ -127,6 +129,51 @@ Inside of the output directory the matrix and dataframe files are the primary ou
    - **unfiltered dataframe** - a dataframe file where no lineages have been collapsed based on the sublineage map.
    - **filtered dataframe** - a dataframe file containg the lineages combined into their parent based on the sublineage map.
 
+## Standalone Parse Freyja Data Module
+This module completes the last part of the freyja pipeline: parsing the freyja output data into a visualizeable format. **Note**, this functionality is *already included* in the pipeline, and thus you do not **need** to run this separately. However, it is often useful to rerun this step separate from freyja such as wanting to group data by sample, date, or week (only one can be selected per run of the pipeline) or running with a differen sublineage map to collapse lineages in an alternative manner.
+
+### Running the Parse Freyja Data Module
+To run this module, the following command can be run:
+```
+wastewatertools parse_freyja_data -i INPUT_DIRECTORY \
+    -o OUTPUT_DIRECTORY \
+    -s SUBLINEAGE_MAP \
+    -m MASTER_FILE \
+    [options]
+
+```
+
+### Parse Freyja Data Module Options
+| Option | Argument | Description | Requirement |
+| ------ | -------- | ----------- | -------- |
+| -i / --input | Directory Path | Directory containing input .demix files (Must be existing). | Required |
+| -o / --output | Directory Path | Directory to place pipeline output (the pipeline will create this directory if it does not exist) | Required |
+| -m / --masterfile | File | A .csv file that links sample names to wastewater sites and collection dates ([Format](#master-file)). | Required |
+| -s / --sublineageMap | File | A .csv file which denotes how to collapse lineages produced by Freyja ([Format](#sublineage-map)). | Required |
+| -p / --pattern | Text | A regex pattern that can be used to remove extraneous text from a sample name. (Must be enclosed in single quotes) (Example: the pattern '.+?(?=\_S\d*_L\d*)' removes the pattern '_S##_L###' commonly added by illumina sequencers) | Optional |
+| --byDate| None | Produces data grouped by date rather than by individual sample (Masterfile must include a date column for each sample). | Optional (Cannot include both --byDate and --byWeek) |
+| --byWeek | None | Produces data grouped by week rather than buy individual sample (Masterfile must include a week column for each sample). | Optional (Cannot include both --byDate and --byWeek) |
+| --combineAll | None | Produces a combined file where lineage abundances from all sites are averaged together for each day/week. | Optional |
+
+### Parse Freyja Data Module Output
+The Parse Freyja Data Module will produce the following output files:
+```
+Output Directory/
+├── A matrix file for each site
+├── A filtered dataframe for each site
+└── An unfiltered dataframe for each site
+```
+
+Inside of the output directory the matrix and dataframe files are the primary output of the pipeline.
+
+**Output File Descriptions:**
+
+- **Matrix File:** (CSV Format) Each row of the matrix represets a Variant and each column represents a sample/date/week present. The cells within the matrix contain 0 or 1 representing if the variant was present in that sample/week/date. This format is useful for human visualization
+- **Dataframe Files:** (CSV Format) These files are useful for graphing and visualization as they can be easily imported into R or pandas dataframe objects. These files contain the columns **sample, lineage, abundance**. Each row represents a lineages present in a given sample (Example: 1,Delta,0.855).
+   - **unfiltered dataframe** - a dataframe file where no lineages have been collapsed based on the sublineage map.
+   - **filtered dataframe** - a dataframe file containg the lineages combined into their parent based on the sublineage map.
+
+
 ## S-Gene Barcode Module
 Because Freyja is built for whole genome sequencing, the barcode file that is uses to classify lineages from nucleotide changes includes mutations throughout the SARS-CoV-2 genome. In order for the tool to process S-Gene sequencing data, the extraneous mutations must be removed from this barcode file. Additionally, some variants cannot be distinguished from one another based on S-Gene mutations. Thus, the entries for these variants must be combined.
 
@@ -142,7 +189,7 @@ However, in the case that you wish to use an existing barcode file, you may supp
 
 Additionally, note that this module **filters out proposed lineages, misc lineages, and hybrid lineages by default**. This can be avoided by supplying the ```--noFilt``` option (See below).
 
-### Options
+### S-Gene Barcode Module Options
 
 | Option | Argument | Description | Requirement |
 | ------ | -------- | ----------- | -------- |
@@ -150,8 +197,50 @@ Additionally, note that this module **filters out proposed lineages, misc lineag
 | -i / --input | File | If you wish to convert an existing barcode file into one containing only S-Gene mutations, a barcode file can be supplied as input. (NOTE: the module will skip the ```freyja update``` command) | Optional |
 | --noFilt | None | Supplying this option will tell the module to keep proposed, misc, and hybrid lineages in the output barcode file (as this is not default behavior) | Optional |
 
-## Parsing Gisaid Sequences to Generate Patient Data
-**Under Development**
 
-## Visualiation
-**Under Development**
+### S-Gene Barcode Module Output
+```
+Output Directory/
+├── curated_lineages.json - 'freyja update' output file
+├── usher_barcodes - whole genome barcodes produced by freyja
+├── LineageGroups.txt - a text files showing lineage groupings and mutations of those groups
+├── S_Gene_Unfiltered.csv - a barcode file containing only s gene mutations, but lineages 
+                            with the same mutation profile have not been combined
+└── S_Gene_barcodes - the final S-gene barcodes file where lieages with the same mutation 
+                      profile have been combined
+```
+
+**Combined Lineage Example:**
+The S-gene barcode module combines lineages with the same S gene profile into a singe entry. The combined lineage will then be represented as a list of lineages separated by pipe characters. 
+
+```
+Example:
+B|B.1|B.1.1|B.2
+```
+
+Your [Sublineage Map](#sublineage-map) file will need to reflect this in the lineage column.
+
+## Gisaid Metadata Parser Module
+The gisaid metadata parser module can be used to generate dataframe files for visualization for gisaid metadata. This functionality is useful to compare wastewaterand patient data together.
+
+### Running the Gisaid Metadata Parser Module
+To run this module, the following command can be used:
+```
+wastewatertools parse_gisaid -i INFILE \
+    -o OUTFILE \
+    -s SUBLINEAGE_MAP \
+    --startDate DATE \
+    --endDate DATE \
+    [options]
+```
+### Gisaid Metadata Parser Module Options
+
+| Option | Argument | Description | Requirement |
+| ------ | -------- | ----------- | -------- |
+| -i / --input| File | Path to a gisaid metadata file (TSV Format). | Required |
+| -o / --output | String | Prefix to use when naming output files. | Required |
+| -s / --sublin | File | A .csv file which denotes how to collapse lineages produced by Freyja ([Format](#sublineage-map)). | Required |
+| --startDate | Date | The first date in the range of data to be parsed (Format: YYYY-MM-DD) | Required |
+| --endDate | Date | The final date in the range of data to be parsed (Format: YYYY-MM-DD) | Required |
+| --abundanceThreshold | Abundance threshold below which a lineage will be collapsed with its parent [Default: Collapse all Lineages] | Optional |
+| --byWeek | Produce data grouped by week rather than date | Optional | 
