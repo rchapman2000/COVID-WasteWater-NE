@@ -18,12 +18,13 @@ Help()
     echo "-b | --barcode BARCODE_FILE - A .csv barcode file to be used by Freyja for processing (Format provided on Github)."
     echo "-s | --sublineageMap SUBLINEAGE_MAP - [Required] A .csv file which denotes how to collapse lineages produced by Freyja (Format provided on Github)."
     echo "-p | --removeFromFile FILE_PATTER - A regex pattern that can be used to remove extraneous text from a sample name (Example provided on Github)."
-    echo "--byWeek - Produces data grouped by week rather than be individual sample collection date."
+    echo "--byDate - Produces data grouped by date rather than by individual samples"
+    echo "--byWeek - Produces data grouped by week rather than by individual samples. Weeks start on Monday."
     echo "--combineAll - Produces a combined file where lineage abundances from all sites are averaged together for each day/week."
     echo
 }
 
-OPTIONS=$(getopt -o i:o:d:r:m:b:s:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,sublineageMap:,removeFromFile:,byWeek,combineAll,help -a -- "$@")
+OPTIONS=$(getopt -o i:o:d:r:m:b:s:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,sublineageMap:,removeFromFile:,byDate,byWeek,combineAll,help -a -- "$@")
 if [ $? -ne 0 ]
 then
     echo ""
@@ -39,7 +40,9 @@ MASTER=
 BARCODE=
 SUBLIN=
 PATTERN=
+BYOPTION=
 BYWEEK=
+BYDATE=
 COMBINEALL=
 
 SCRIPT_DIR="$(dirname ${BASH_SOURCE})/"
@@ -77,8 +80,12 @@ while true; do
         shift 2
         ;;
     -p | --removeFromFile )
-        PATTERN="--removefromFile $2"
+        PATTERN="--removeFromFile $2"
         shift 2
+        ;;
+    --byDate )
+        BYDATE="--byDate"
+        shift
         ;;
     --byWeek )
         BYWEEK="--byWeek"
@@ -229,6 +236,21 @@ then
     exit 1
 fi
 
+if [ -n "$BYDATE" ] && [ -n "$BYWEEK" ]
+then
+    echo "Both the --byDate and --byWeek options have been provided. Only one can be supplied."
+    echo ''
+    exit 1
+else
+    if [ -n "$BYDATE" ] 
+    then 
+        BYOPTION=$BYDATE
+    elif [ -n "$BYWEEK" ]
+    then
+        BYOPTION=$BYWEEK
+    fi
+fi
+
 
 FREYJA_DIR=$OUTDIR"freyja-results/"
 if [ ! -d "${OUTDIR}freyja-results/" ]
@@ -256,4 +278,5 @@ done
 echo ''
 
 cp $FREYJA_DIR*.demix $DEMIXDIR
-python3 $SCRIPT_DIR"scripts/parse_freyja.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYWEEK $COMBINEALL
+echo "python3 ${SCRIPT_DIR}scripts/parse_freyja.py -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYOPTION $COMBINEALL"
+python3 $SCRIPT_DIR"scripts/parse_freyja.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYOPTION $COMBINEALL

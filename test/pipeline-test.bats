@@ -136,13 +136,25 @@ setup() {
     assert_output --partial "does not exist. Please include an existing file and check the path provided (-s/--sublineageMap)!"
 }
 
+@test "Show error if both --byDate and --byWeek provided" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN --byDate --byWeek
+    assert_output --partial "Both the --byDate and --byWeek options have been provided. Only one can be supplied."
+}
+
 @test "Test a run where barcodes are provided" {
-    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN --byDate
+    [ "$status" -eq 0 ]
     result="$(diff $VALIDOUTDIR/Site-X-filtered-dataframe.csv $COMPAREDIR/with-barcodes/Site-X-filtered-dataframe.csv)"
     result2="$(diff $VALIDOUTDIR/Site-X-unfiltered-dataframe.csv $COMPAREDIR/with-barcodes/Site-X-unfiltered-dataframe.csv)"
     results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/with-barcodes/Site-X-lineageMatrix.csv)"
     ["$result" -eq '']
     ["$result2" -eq '']
     ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm $VALIDOUTDIR/Site-X-filtered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
 }
+
 

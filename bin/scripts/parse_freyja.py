@@ -279,9 +279,12 @@ def main():
     parser.add_argument('-m', '--mastersheet',required=True, type=str, \
         help = "[Required] - Mastersheet that can be used to link samples to their date and site", action = 'store', \
         dest='master')
-    parser.add_argument('--removefromFile', required=False, type=str, \
+    parser.add_argument('--removeFromFile', required=False, type=str, \
         help = "A regex pattern that can be used to remove extraneous info from file name to derive the sample name", \
         action = 'store', dest = 'filePattern')
+    parser.add_argument("--byDate", required=False, \
+        help = "Groups the sames by the date and reports lienage abundance percentages for those dates", \
+        action = "store_true", dest="byDate")
     parser.add_argument('--byWeek', required=False, \
         help='Groups samples by week and reports average lineage abundance percentages for those weeks', \
         action ='store_true', dest='byWeek')  
@@ -444,7 +447,7 @@ def main():
         
         # The user did not specify that data to be grouped by weeks. Thus,
         # it will be grouped by individual collection dates in each site.
-        else:
+        elif args.byDate:
             dates = []
             if (site == 'All'):
                 dates = master['Date'].drop_duplicates().values.tolist()
@@ -510,6 +513,37 @@ def main():
                 collapsedlngs = collapseLineages(d, sampleUnfilteredData, abunCutoff, sublinMap)
                 filteredData = filteredData + collapsedlngs
                 unfilteredData = unfilteredData + sampleUnfilteredData
+        
+        else:
+            for s in samples:
+                lngs, abunds = parseDemix(indir + sampleToFile[s] + ".demix")
+                sampleUnfilteredData = []
+                # Loop over every lineage found in the file.
+                for ln in lngs:
+                    # If the lineage is not already in the dictionary,
+                    # create a new list to store abundances for that lineage.
+                    # The list will be the length of the number of samples in this week
+                    # and will initially be filled with zeroes.
+                    if ln not in lngAbunds.keys():
+                        lngAbunds[ln] = [0 for i in range(0, len(samples))]
+
+                    # Grab the list of abundances associated with the given lineage
+                    # and insert the current sample's abundance. The abundance's position in
+                    # this list will matcht the sample's position in the list of samples
+                    # for the given week.
+                    lngAbunds[ln][samples.index(s)] = abunds[lngs.index(ln)]
+                
+                    data = [s, ln, lngAbunds[ln][samples.index(s)]]
+                    sampleUnfilteredData.append(data)
+
+                # Once all of the average abundances have been calculated for that date, collapses
+                # the lineages and adds that to the master filtered dataframe data. 
+                # Also, appends the unfiltered data for the given sample to the master unfiltered
+                # dataframe data. 
+                collapsedlngs = collapseLineages(s, sampleUnfilteredData, abunCutoff, sublinMap)
+                filteredData = filteredData + collapsedlngs
+                unfilteredData = unfilteredData + sampleUnfilteredData
+
         
 
         # Writes the output files 
