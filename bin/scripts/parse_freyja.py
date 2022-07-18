@@ -4,52 +4,20 @@ import argparse
 import re
 import pandas as pd
 from datetime import datetime
+import utilities #import parseDirectory, parseDate, collapseLineages, parseCSVToDF, writeDataFrame
 
 
-#### parseDirectory:
-#
-# Ensures that the directory passed to the script has a trailing 
-# slash, is a valid path, and is transformed into an absolute path.
-#
-# Input:
-#   d - a string representing the path to a directory
-#
-# Output:
-#   a corrected string representing the path to a directory
-def parseDirectory(d):
-
-    #Checks to see if the directory ends in a trailing slash.
-    if d[-1] != '/':
-        # If not, add one.
-        d = d + '/'
-
-    # Checks to see if the directory path exists.
-    if (os.path.isdir(d)):
-        # If the directory exists, checks to see if the path 
-        # provided is absolute.
-        if os.path.isabs(d):
-            # If so, return the directory
-            return d
-        else:
-            # If the path is not absolute, add the path to the
-            # current working directory.
-            return os.getcwd() + '/' + d
-    else:
-        # If the directory does not exist, exit the script and notify the user.
-        sys.exit("ERROR: Directory {0} does not exist!".format(d))
-
-#### grabFiles:
-#
-# grathers files matching a specific regex pattern from a specified 
-# directory.
-#
-# Input:
-#   d - a string represening the path to a directory
-#
-# Output:
-#   a list containg file names of '.demix' files present in the
-#       directory
 def grabFiles(d):
+    """ Gathers files matching a specific pattern from 
+    a directory
+
+    Paramters:
+        d : A directory path to be searched
+    
+    Output:
+        A list containing names of '.demix' files found in
+        the directory
+    """
 
     # Grabs the list of files present in the directory.
     fileList = os.listdir(d)
@@ -74,18 +42,21 @@ def grabFiles(d):
 
     return files
 
-#### parseSampleNames;
-#
-# Removes a pattern from a set of files using regex to retrieve
-# sample names.
-#
-# Input:
-#   files - a list of files
-#   r - the regex pattern to be applied to the files
-#
-# Output:
-#   a dictionary matching a sample name to a file name 
+
 def parseSampleName(files, r):
+    """ Removes a pattern from a set of files using a 
+    regex pattern.
+
+    Parameters:
+        files: a list of file names
+
+        r: a regex pattern to be used. The pattern must return a group containing
+        the filename
+
+    Output:
+        A dictionary contaning sample name keys paired with their respective
+        file.
+    """
     
     sampleToFile = {}
     # Loops over all of the files provided and removes the pattern
@@ -103,17 +74,17 @@ def parseSampleName(files, r):
 
     return sampleToFile
 
-#### parseDemix:
-#
-# Parses the .demix files produced by freyja to grab a list of lineages
-# and abundances found in a given sample.
-#
-# Input:
-#   file - a '.demix' file to analyze
-# 
-# Output:
-#   Both a list of lineages and abundances that were parsed from the given file.
+
 def parseDemix(file):
+    """ Parses a '.demix' files to retrive the lineages and abundances 
+    identified in the sample.
+
+    Parameters: 
+        file: path to a '.demix' file to be parsed.
+
+    Output:
+        A list of lineagess and a list of abundances parsed from the file.
+    """
     # Open the file provided.
     f = open(file, "r")
 
@@ -126,7 +97,7 @@ def parseDemix(file):
     for line in f:
         # Removes the trailing newline character and split
         # the line at a tab character.
-        split = line.strip().split("\t")
+        split = line.strip("\n").strip(" ").split("\t")
 
         # If the line starts with lineages.
         if split[0] == "lineages":
@@ -140,126 +111,161 @@ def parseDemix(file):
     f.close()
     return lngs, abunds
 
-#### getWeekAverage:
-#
-# Calcualtes the average of the list provided.
-#
-# Input:
-#   list - a list containing abundance values for a set of samples
-#
-# Output:
-#   the average of the values in the list for that week.
+
 def getAverage(list):
+    """ Returns the average of a list of float values
+
+    Parameters:
+        list: a list of float values
+
+    Output:
+        The average of the list of values.
+    """
     floatvals = [float(x) for x in list]
     return sum(floatvals) / len(floatvals)
 
-#### collapseLineages:
-#
-# Collapses lineages under the defined parent lineage based on the
-# user provided sublineage map. Abundance values are summed for each
-# to generate the total abundance for the parent lineages.
-#
-# Input:
-#   sample - the name of the sample being parsed currently.
-#   unfiltData - unfiltered data to be collapsed during in this method.
-#   cutoff - a threshold where if a lineage has a greater abundance,
-#            it will not be collapsed into its parent.
-#   map - the sublineage map file provided by the user.
-def collapseLineages(sample, unfiltData, cutoff, map):
-    
-    filteredDict = {}
 
-    # Loops over each row in the data and adds the entries to a new dictionary
-    # which maps the lineage to the abundance
-    for row in unfiltData:
-        # If the abundance is above the specified cutoff, do not collapse it.
-        if float(row[2]) >= cutoff:
-            filteredDict[row[1]] = [row[2]]
-        # If the abundance is below the cutoff, collapse it into the
-        # specified parent lineage.
-        else:
-            # Grab the label provided in the sublineage map for the given lineage.
-            label = map[map.Lineage == row[1]].Label.values[0]
-            # If the parent lineage has already been added to the dictionary,
-            # add the abundance to the current abundance for that lineage.
-            if label in filteredDict.keys():
-                filteredDict[label][0] = str(float(filteredDict[label][0]) + float(row[2]))
-            # If the paretn lineage has not been added, create a new mapping in the dictionary.
-            else:
-                filteredDict[label] = [row[2]]
-
-    # Format the data back into a dataframe-style format (sample, lineage, abundance)
-    returnData = []
-    for k in filteredDict.keys():
-        returnData.append([sample, k] + filteredDict[k])
-
-    return returnData
-
-#### writeLineageMatrix:
-#
-# Writes data into a matrix style format for human visualization.
-# Each column is a sample, and each row is a lineage. Values in the
-# matrix represent abundances for that lineage within the sample.
-#
-# Input:
-#   samples - a list of sample names
-#   master - the masterfile provided to the script
-#   lngAbunds - the dictionary linking a lineage to a list of
-#               abunances
-#   outfile - the name of the file to write the data to.
-#
-# Output:
-#   None
 def writeLineageMatrix(samples, master, lngAbunds, outfile):
+    """ Formats and outputs a file in matrix style format. The 
+    Columns represent samples/dates/weeks and the rows represent
+    a lineages. The intersection of the column and row is the abundance
+    of that lineage within the sample.
+
+    Parameters:
+        samples: A list of sample names/dates/weeks to output
+        
+        lngAbunds: a dictionary where lineages keys are paired with
+        lists of abundance values. The abundance values are present
+        at the same index in the list as their sample in the samples
+        list.
+
+        outfile: The name of a file to write the data to.
+
+    Output: 
+        Nothing to return.
+    """
     
     # Opens the output file and creates it if it does not exist.
     o = open(outfile, "w+")
     
     # Grabs the collection date associated with each sample and appends
     # them to a list.
-    dates = []
-    for s in samples:
-        dates.append(master.loc[master['Sample'] == s].Date.values[0])
+    #dates = []
+    #for s in samples:
+        #dates.append(master.loc[master['Sample'] == s].Date.values[0])
     
     # Writes the header column of the file by joining the list
     # of dates with commas.
-    o.write("," + ",".join(dates) + "\n")
+    o.write("," + ",".join(samples) + "\n")
 
     # Loops over the abundaces in the dicationary and writes each line joined
     # with commas.
     for x in lngAbunds.keys():
-        o.write(x + "," + ",".join([str(i) for i in lngAbunds[x]]) + "\n")
+        o.write(x + "," + ",".join([str(i) for i in lngAbunds[x]]) + '\n')
 
     # Closes the output stream.
     o.close()
 
-#### writeDataFrame:
-#
-# Writes data into a dataframe like format for easy visualization.
-#
-# Input:
-#   data - the data to be written into the dataframe
-#   outfile - the name of the file to be written to
-#   header - the header of the dataframe to be written.
-#
-# Output:
-#   None
-def writeDataFrame(data, outfile, header):
-    
-    # Opens the output file and creates it if it does not exist.
-    outdf = open(outfile + ".csv", "w+")
-    
-    # Writes the header to the file.
-    outdf.write(header)
-    
-    # Loops over each line in the data, joins the values with a 
-    # comma, and adds a newline character to the end.
-    for d in data:
-        outdf.write(",".join(str(i) for i in d) + "\n")
-    
-    # Closes the output file stream.
-    outdf.close()
 
+def parseByGroup(site, groups, groupCol, master, indir, sampleToFile, abunCutoff, sublinMap):
+    """ Instead of parsing by samples groups the samples by either week or dates and
+    calculates average abundance of lineages present in samples for those groups.
+
+    Parameters:
+        site: The wastewater site being analyzed currently
+
+        groups: a list of groups to be analyzed (either dates or weeks)
+
+        groupCol: the column in the masterfile containing the group identifier
+        (either: 'Week' or 'Date')
+
+        master: a pandas dataframe containing the data from the masterfile.
+
+        indir: the directory containing the input .demix files
+
+        sampleToFile: a dictionary pairing sample name keys to file values
+
+        abunCutoff: the cutoff below which to not collapse lineages
+
+        sublinMap: a pandas dataframe linking lineages to parent names
+        for collapsing
+
+    Output:
+        lngAbunds: a dictionary linking lineage keys to a list of abundances.
+        The list contains a spot for each sample in the site. The abundance at a 
+        given position represents the lineages abundance in the sample at that same position
+        in the list of samples.
+
+        unfilteredData: a list of lists containing data for samples in the site. The lists contain sample
+        names, lineages, and abundances.
+
+        filteredData: a list of lists containing data for the samples in the site. This data contains lineages
+        that have been collapsed into their parents. The lists contain names, lineages, and abundances.
+    """
+    # Defines lists/disctionaries to store processed data.
+    lngAbunds = {}
+    unfilteredData = []
+    filteredData = []
+    for g in groups:
+
+        # For each group, grab all of the samples found for the given site and group.
+        groupSamples = []
+        if (site == 'All'):
+            groupSamples = master.loc[(master[groupCol] == g)].Sample.tolist()
+        else:
+            groupSamples = master.loc[(master[groupCol] == g) & (master['Site'] == site)].Sample.tolist()
+
+        # For every sample in the group, parse the .demix file to grab lineages and
+        # abundances present in the file. Then adds the lineage to a dictionary pairing
+        # a lineage to a list of abundances.
+        groupLngAbunds = {}
+        for sample in groupSamples:
+            lngs, abunds = parseDemix(indir + sampleToFile[sample] + ".demix")
+            sampleUnfilteredData = []
+            # Loop over every lineage found in the file.
+            for ln in lngs:
+                # If the lineage is not already in the dictionary,
+                # create a new list to store abundances for that lineage.
+                # The list will be the length of the number of samples in the group
+                # and will initially be filled with zeroes.
+                if ln not in groupLngAbunds.keys():
+                    groupLngAbunds[ln] = [0 for i in range(0, len(groupSamples))]
+
+                # Grab the list of abundances associated with the given lineage
+                # and insert the current sample's abundance. The abundance's position in
+                # this list will matcht the sample's position in the list of samples
+                # for the given group.
+                groupLngAbunds[ln][groupSamples.index(sample)] = abunds[lngs.index(ln)]
+
+        # Now loop over each lineage found for the given group, and add the average 
+        # abundance for that week to the overall list of lineages.
+        for ln in groupLngAbunds.keys():
+            # If the lineage has not been added yet, create an empty list 
+            # of the same length as the number of groups in the site. The list will be filled
+            # with zeros.
+            if ln not in lngAbunds.keys():
+                lngAbunds[ln] = [0 for i in range(0, len(groups))]
+                    
+            # Grab the list of abundances associated with the given lineage
+            # and insert the average of the groups's abundances for that lineage into
+            # the list. The average abundance's position in this list will match the group's
+            # position in the list of groups.
+            lngAbunds[ln][groups.index(g)] = getAverage(groupLngAbunds[ln])
+
+            # Create a data entry for the week's lineage and add it to the unfiltered 
+            # dataframe data. The entry containst the group, the lineage, and the average abundance
+            data = [g, ln, getAverage(groupLngAbunds[ln])]
+            sampleUnfilteredData.append(data)
+
+        # Once all of the average abundances have been calculated for that group, collapses
+        # the lineages and adds that to the master filtered dataframe data. 
+        # Also, appends the unfiltered data for the given sample to the master unfiltered
+        # dataframe data. 
+        collapsedlngs = utilities.collapseLineages(g, sampleUnfilteredData, abunCutoff, sublinMap)
+        filteredData = filteredData + collapsedlngs
+        unfilteredData = unfilteredData + sampleUnfilteredData
+
+    return lngAbunds, unfilteredData, filteredData
 
 def main():
 
@@ -299,16 +305,16 @@ def main():
     args = parser.parse_args()
 
     # Parses the input and output directories.
-    indir = parseDirectory(args.indir)
-    outdir = parseDirectory(args.outdir)
+    indir = utilities.parseDirectory(args.indir)
+    outdir = utilities.parseDirectory(args.outdir)
 
     # Reads in the sublineage map into a pandas dataframe. If the file
     # does not exist, the script exists and notifies the user.
-    sublinMap = ''
-    if os.path.exists(args.sublin):
-        sublinMap = pd.read_csv(args.sublin, header=0)
-    else:
-        sys.exit("ERROR: File {0} does not exist!".format(args.sublin))
+    sublinMap = utilities.parseCSVToDF(args.sublin, ",", header=True)
+    #if os.path.exists(args.sublin):
+    #    sublinMap = pd.read_csv(args.sublin, header=0)
+    #else:
+    #    sys.exit("ERROR: File {0} does not exist!".format(args.sublin))
 
     # Abundance cutoff is 100% by default meaning that every lineage
     # will be collapsed regardless of abundance.
@@ -355,14 +361,6 @@ def main():
     # Loops over all of the sites identified from the masterfile and
     # creates the datafiles for each.
     for site in sites:
-        samples = []
-        
-        # Identifies all of the sample associated with a given site.
-        # If the site is 'All', add all of the samples to the list.
-        if (site == "All"):
-            samples = master.Sample.tolist()
-        else:
-            samples = master.loc[master['Site'] == site].Sample.tolist()
         
         # Defines lists/disctionaries to store processed data.
         lngAbunds = {}
@@ -379,142 +377,41 @@ def main():
             if (site == 'All'):
                 weeks = master['Week'].drop_duplicates().values.tolist()
             else:
-                #weeks = master.loc[master['Site'] == site][['Year', 'Week']].drop_duplicates().values.tolist()
                 weeks = master.loc[master['Site'] == site]['Week'].drop_duplicates().values.tolist()
             
-            # Loop over every week for this site and calculate the lineages and abundances
-            # found in samples for that week.
-            for w in weeks:
-                #week = "{0} Week {1}".format(w[0], w[1])
-                #weekSamples = master.loc[(master['Year'] == w[0]) & (master['Week'] == w[1]) & (master['Site'] == site)].Sample.tolist()
-
-                # For each week, grab all of the samples found for the given site and week.
-                weekSamples = []
-                if (site == 'All'):
-                    weekSamples = master.loc[(master['Week'] == w)].Sample.tolist()
-                else:
-                    weekSamples = master.loc[(master['Week'] == w) & (master['Site'] == site)].Sample.tolist()
-
-                # For every sample in the week, parse the .demix file to grab lineages and
-                # abundances present in the file. Then adds the lineage to a dictionary pairing
-                # a lineage to a list of abundances.
-                wkLngAbunds = {}
-                for sample in weekSamples:
-                    lngs, abunds = parseDemix(indir + sampleToFile[sample] + ".demix")
-                    sampleUnfilteredData = []
-                    # Loop over every lineage found in the file.
-                    for ln in lngs:
-                        # If the lineage is not already in the dictionary,
-                        # create a new list to store abundances for that lineage.
-                        # The list will be the length of the number of samples in this week
-                        # and will initially be filled with zeroes.
-                        if ln not in wkLngAbunds.keys():
-                            wkLngAbunds[ln] = [0 for i in range(0, len(weekSamples))]
-
-                        # Grab the list of abundances associated with the given lineage
-                        # and insert the current sample's abundance. The abundance's position in
-                        # this list will matcht the sample's position in the list of samples
-                        # for the given week.
-                        wkLngAbunds[ln][weekSamples.index(sample)] = abunds[lngs.index(ln)]
-
-                # Now loop over each lineage found for the given week, and add the average 
-                # abundance for that week to the overall list of lineages.
-                for ln in wkLngAbunds.keys():
-                    # If the lineage has not been added yet, create an empty list 
-                    # of the same length as the number of weeks in the site. The list will be filled
-                    # with zeros.
-                    if ln not in lngAbunds.keys():
-                        lngAbunds[ln] = [0 for i in range(0, len(weeks))]
-                    
-                    # Grab the list of abundances associated with the given lineage
-                    # and insert the average of the week's abundances for that lineage into
-                    # the list. The average abundance's position in this list will match the week's
-                    # position in the list of weeks.
-                    lngAbunds[ln][weeks.index(w)] = getAverage(wkLngAbunds[ln])
-
-                    # Create a data entry for the week's lineage and add it to the unfiltered 
-                    # dataframe data. The entry containst the week, the lineage, and the average abundance
-                    data = [w, ln, getAverage(wkLngAbunds[ln])]
-                    sampleUnfilteredData.append(data)
-
-                # Once all of the average abundances have been calculated for that week, collapses
-                # the lineages and adds that to the master filtered dataframe data. 
-                # Also, appends the unfiltered data for the given sample to the master unfiltered
-                # dataframe data. 
-                collapsedlngs = collapseLineages(w, sampleUnfilteredData, abunCutoff, sublinMap)
-                filteredData = filteredData + collapsedlngs
-                unfilteredData = unfilteredData + sampleUnfilteredData
+            # Calculate lineage abundances and dataframe data for the weeks
+            lngAbunds, unfilteredData, filteredData = parseByGroup(site, weeks, 'Week', master, indir, sampleToFile, abunCutoff, sublinMap)
+            # Write the lineage matrix for the weeks
+            writeLineageMatrix(weeks, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
         
         # The user did not specify that data to be grouped by weeks. Thus,
         # it will be grouped by individual collection dates in each site.
         elif args.byDate:
+            
+            # Grabs all of the dates associated with the gven site from the masterfile.
+            # If the site is 'All', then every unique date found in the masterfile is
+            # added to the list of dates.
             dates = []
             if (site == 'All'):
                 dates = master['Date'].drop_duplicates().values.tolist()
             else:
                 dates = master.loc[master['Site'] == site]['Date'].drop_duplicates().values.tolist()
 
-            # Loop over every date for this site and calculate the lineages and abundances
-            # found in samples collected that date.
-            for d in dates:
-
-                # For each date, grab all of the samples found for the given site and date.
-                dateSamples = []
-                if (site == 'All'):
-                    dateSamples = master.loc[(master['Date'] == d)].Sample.tolist()
-                else:
-                    dateSamples = master.loc[(master['Date'] == d) & (master['Site'] == site)].Sample.tolist()
-
-                # For every sample in the week, parse the .demix file to grab lineages and
-                # abundances present in the file. Then adds the lineage to a dictionary pairing
-                # a lineage to a list of abundances.
-                dtLngAbunds = {}
-                for sample in dateSamples:
-                    lngs, abunds = parseDemix(indir + sampleToFile[sample] + ".demix")
-                    sampleUnfilteredData = []
-                    # Loop over every lineage found in the file.
-                    for ln in lngs:
-                        # If the lineage is not already in the dictionary,
-                        # create a new list to store abundances for that lineage.
-                        # The list will be the length of the number of samples in this week
-                        # and will initially be filled with zeroes.
-                        if ln not in dtLngAbunds.keys():
-                            dtLngAbunds[ln] = [0 for i in range(0, len(dateSamples))]
-
-                        # Grab the list of abundances associated with the given lineage
-                        # and insert the current sample's abundance. The abundance's position in
-                        # this list will matcht the sample's position in the list of samples
-                        # for the given week.
-                        dtLngAbunds[ln][dateSamples.index(sample)] = abunds[lngs.index(ln)]
-                
-                # Loops overa ll of the lineages found for that date
-                for ln in dtLngAbunds.keys():
-                    # If the lineage has not been added yet, create an empty list 
-                    # of the same length as the number of dates in the site. The list will be filled
-                    # with zeros.
-                    if ln not in lngAbunds.keys():
-                        lngAbunds[ln] = [0 for i in range(0, len(dates))]
-                    
-                    # Grab the list of abundances associated with the given lineage
-                    # and insert the average of the date's abundances for that lineage into
-                    # the list. The average abundance's position in this list will match the date's
-                    # position in the list of weeks.
-                    lngAbunds[ln][dates.index(d)] = getAverage(dtLngAbunds[ln])
-
-                    # Create a data entry for the week's lineage and add it to the unfiltered 
-                    # dataframe data. The entry containst the date, the lineage, and the average abundance
-                    data = [d, ln, getAverage(dtLngAbunds[ln])]
-                    sampleUnfilteredData.append(data)
-
-                # Once all of the average abundances have been calculated for that date, collapses
-                # the lineages and adds that to the master filtered dataframe data. 
-                # Also, appends the unfiltered data for the given sample to the master unfiltered
-                # dataframe data. 
-                collapsedlngs = collapseLineages(d, sampleUnfilteredData, abunCutoff, sublinMap)
-                filteredData = filteredData + collapsedlngs
-                unfilteredData = unfilteredData + sampleUnfilteredData
+            # Calculate lineage abundances and dataframe data for the dates
+            lngAbunds, unfilteredData, filteredData = parseByGroup(site, dates, 'Date', master, indir, sampleToFile, abunCutoff, sublinMap)
+            # Write the lineage matrix for the dates
+            writeLineageMatrix(dates, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
         
         else:
+
+            samples = []
+            # Identifies all of the sample associated with a given site.
+            # If the site is 'All', add all of the samples to the list.
+            if (site == "All"):
+                samples = master.Sample.tolist()
+            else:
+                samples = master.loc[master['Site'] == site].Sample.tolist()
+
             for s in samples:
                 lngs, abunds = parseDemix(indir + sampleToFile[s] + ".demix")
                 sampleUnfilteredData = []
@@ -540,23 +437,20 @@ def main():
                 # the lineages and adds that to the master filtered dataframe data. 
                 # Also, appends the unfiltered data for the given sample to the master unfiltered
                 # dataframe data. 
-                collapsedlngs = collapseLineages(s, sampleUnfilteredData, abunCutoff, sublinMap)
+                collapsedlngs = utilities.collapseLineages(s, sampleUnfilteredData, abunCutoff, sublinMap)
                 filteredData = filteredData + collapsedlngs
                 unfilteredData = unfilteredData + sampleUnfilteredData
-
+            writeLineageMatrix(samples, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
         
 
-        # Writes the output files 
-        # 1. A 'Lineage Matrix' which has rows representing lineages and columns
-        #    representing samples/weeks
-        # 2. An unfiltered dataframe, where rows contain fields for a sample/week, lienage,
+        # Writes the following files 
+        # 1. An unfiltered dataframe, where rows contain fields for a sample/week, lienage,
         #    and abundance
-        # 3. A filtered dataframe, which contains the same data as the unfiltered dataframe 
+        # 2. A filtered dataframe, which contains the same data as the unfiltered dataframe 
         #    except that the lineages have been combined into thier parent lineage.
-        writeLineageMatrix(samples, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
         dfHeader = "sample,lineage,abundance\n"
-        writeDataFrame(unfilteredData, outdir + site + "-unfiltered-dataframe", dfHeader)
-        writeDataFrame(filteredData, outdir + site + "-filtered-dataframe", dfHeader)
+        utilities.writeDataFrame(unfilteredData, outdir + site + "-unfiltered-dataframe", dfHeader)
+        utilities.writeDataFrame(filteredData, outdir + site + "-filtered-dataframe", dfHeader)
 
 if __name__ == "__main__":
     main()

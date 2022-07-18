@@ -1,0 +1,7 @@
+sample,lineage,abundance
+sample1,BA.2,0.7
+sample1,BA.4,0.15
+sample1,BA.5,0.15
+sample2,BA.2.12.1,0.95
+sample2,AY.4,0.05
+sample3,AY.5,1.0000

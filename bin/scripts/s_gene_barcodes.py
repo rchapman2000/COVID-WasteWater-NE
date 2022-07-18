@@ -6,9 +6,26 @@ import subprocess as sp
 from utilities import parseCSVToDF, parseDirectory
 
 def getMutPos(m):
+    """ Calculate and returns the position of the mutation
+    
+    Parameters:
+        m: a mutation in the format "A#####T"
+
+    Output:
+        The integer position of the mutation.
+    """
     return int(m[1:len(m) - 1])
 
 def runFreyjaUpdate(o):
+    """ Runs the Freyja update module to download the most
+    up-to-date set of barcodes.
+
+    Parameters:
+        o: a path to output the files from the module
+
+    Output: 
+        None
+    """
     cmd = "freyja update --outdir {0}".format(o)
     sp.run(cmd, check=True, stdout=sp.PIPE, stderr=sp.PIPE, shell=True)
     

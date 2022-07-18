@@ -3,17 +3,17 @@ import os
 import pandas as pd
 from datetime import datetime as dt
 
-#### parseDirectory:
-#
-# Ensures that the directory passed to the script has a trailing 
-# slash, is a valid path, and is transformed into an absolute path.
-#
-# Input:
-#   d - a string representing the path to a directory
-#
-# Output:
-#   a corrected string representing the path to a directory
+
 def parseDirectory(d):
+    """ Parses a directory to ensure it ends with a trailing slash, exists, and
+    is absolute.
+
+    Parameters:
+        d: a path to a given directory.
+
+    output:
+        The directory after parsing.
+    """
 
     #Checks to see if the directory ends in a trailing slash.
     if d[-1] != '/':
@@ -35,36 +35,77 @@ def parseDirectory(d):
         # If the directory does not exist, exit the script and notify the user.
         sys.exit("ERROR: Directory {0} does not exist!".format(d))
 
+
 def parseCSVToDF(f, d, header):
+    """Parses an input .csv file and places it into a pandas dataframe
+    
+    Parameters:
+        f: a path to a csv file to use
+
+        d: the delimiter of the file
+
+        h: a boolean denoting whether the file has a header
+
+    Output:
+        A pandas dataframe containing the data from the csv file.
+    """
+
+    # Checks to ensure that the file exists.
     if os.path.exists(f):
+
+        # If the file has a header, include this
+        # in the pandas command.
         if header:
             return pd.read_csv(f, delimiter=d, header=0)
         else:
+            # If there is no header, do not include a header in
+            # the pandas command.
             return pd.read_csv(f, delimiter=d)
     else:
+        # If the file does not exist, exit the script and notify the user.
         sys.exit("ERROR: File {0} does not exist!".format(f))
 
 def parseDate(d,f):
+    """Parses an input data in string format.
+    
+    Parameters:
+        d: a date in string format
+
+        f: the format of the date to be parsed
+
+    Output:
+        A datetime object representing the date.
+    """
     try:
         toReturn = dt.strptime(d, f)
         return toReturn
     except ValueError:
-         sys.exit("Error: Date {0} not provided in correct format".format(d))
+        # If the date is in the incorrect format, notify the user and exit the script.
+        sys.exit("Error: Date {0} not provided in correct format".format(d))
 
-#### collapseLineages:
-#
-# Collapses lineages under the defined parent lineage based on the
-# user provided sublineage map. Abundance values are summed for each
-# to generate the total abundance for the parent lineages.
-#
-# Input:
-#   sample - the name of the sample being parsed currently.
-#   unfiltData - unfiltered data to be collapsed during in this method.
-#   cutoff - a threshold where if a lineage has a greater abundance,
-#            it will not be collapsed into its parent.
-#   map - the sublineage map file provided by the user.
+
 def collapseLineages(sample, unfiltData, cutoff, map):
-    
+    """ Collapses individual lineages into their parents based on
+    a user provided sublineage map. Abundance values are summed for each
+    lineage under a given parent. As well, if the user supplied
+    an abundance cutoff, lineages that have abundances above
+    this threshold will not be collapsed.
+
+    Parameters:
+        sample: the name of the sample being parsed.
+
+        unfiltData - the data containing lineages and abundances
+        to be collapsed
+
+        cutoff: the percent cutoff above which a lineage will
+        not be collapsed
+
+        map: a pandas dataframe containing the sublineage map.
+
+    Output:
+        A list of lists containing collapsed lienage data. Each list
+        will contain the sample name, lineage, and abundance.
+    """
     filteredDict = {}
 
     # Loops over each row in the data and adds the entries to a new dictionary
@@ -93,18 +134,24 @@ def collapseLineages(sample, unfiltData, cutoff, map):
 
     return returnData
 
-#### writeDataFrame:
-#
-# Writes data into a dataframe like format for easy visualization.
-#
-# Input:
-#   data - the data to be written into the dataframe
-#   outfile - the name of the file to be written to
-#   header - the header of the dataframe to be written.
-#
-# Output:
-#   None
 def writeDataFrame(data, outfile, header):
+    """ Writes data into a 'dataframe'-like format for
+    visualization and analysis.
+
+    Parameters:
+        data: a list of lists containing data to be written. Each
+        list should contain the following three datapoints:
+            1. Sample/Group Name
+            2. Lineage
+            3. Abundance
+        
+        outfile: the name of the file to be written to.
+
+        header: the header of the dataframe to be written.
+
+    Output: 
+        None
+    """
     
     # Opens the output file and creates it if it does not exist.
     outdf = open(outfile + ".csv", "w+")
