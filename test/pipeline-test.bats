@@ -4,15 +4,15 @@ setup() {
 
     TESTDIR="$( cd "$( dirname "$BATS_TEST_FILENAME" )" >/dev/null 2>&1 && pwd )"
 
-    PATH="$TESTDIR/../freyja-parsing-pipeline:$PATH"
+    PATH="$TESTDIR/../bin:$PATH"
 
     VALIDINDIR=$TESTDIR/pipeline-test-files/inDir/
     VALIDOUTDIR=$TESTDIR/pipeline-test-files/outDir
     VALIDDEMIXDIR=$TESTDIR/pipeline-test-files/demixDir
     VALIDREF=$TESTDIR/pipeline-test-files/reference-test.fasta
     VALIDMASTER=$TESTDIR/pipeline-test-files/master-test.csv
-    VALIDBARCODE=$TESTDIR/pipeline-test-files/barcode-test.csv
-    VALIDSUBLIN=$TESTDIR/pipeline-test-files/sublin-test.csv
+    VALIDBARCODE=$TESTDIR/pipeline-test-files/barcodes-test.csv
+    VALIDCOLLAPSE=$TESTDIR/pipeline-test-files/collapse-test.tsv
 
     INVALIDDIR=$TESTDIR/invalidDir
     INVALIDFILE=$TESTDIR/invalidfile
@@ -31,6 +31,16 @@ setup() {
 @test "Show error when no options provided" {
     run freyja-pipeline.sh
     assert_output --partial 'No input directory provided. Please include an input directory (-i/--input)!'
+}
+@test "Show error when invalid option is provided" {
+    # Option 'intput' supplied intead of input
+    run freyja-pipeline.sh --intput $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN
+    assert_output --partial "getopt: unrecognized option '--intput'"
+    assert_output --partial "freyja-pipeline.sh - The purpose of this pipeline is to automate the analysis of wastewater data using freyja."
+
+    run freyja-pipeline.sh -q --intput $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN
+    assert_output --partial "getopt: unrecognized option '-q'"
+    assert_output --partial "freyja-pipeline.sh - The purpose of this pipeline is to automate the analysis of wastewater data using freyja."
 }
 
 @test "Show error when no input directory provided" {
@@ -102,37 +112,145 @@ setup() {
     assert_output --partial "does not exist. Please include an existing file and check the path provided (-m/--mastefile)!"
 }
 
-@test "Show error if invalid barcode file is provided" {
-    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $INVALIDFILE
-    assert_output --partial "does not exist. Please include an existing file and check the path provided (-b/--barcode)!"
-
-    run freyja-pipeline.sh -i $VALIDINDIR -o $VALIDOUTDIR -d $VALIDINDIR -r $VALIDREF -m $VALIDMASTER -b $INVALIDFILE
-    assert_output --partial "does not exist. Please include an existing file and check the path provided (-b/--barcode)!"
-}
-
-@test "Show error if no sublineage map file is provided" {
+@test "Show error if no collapse map file is provided" {
     run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE
-    assert_output --partial "No sublineage map file provided. Please include a sublineage map file (-s/--sublineageMap)"
+    assert_output --partial "No collapse file provided. Please include a sublineage map file (-c/--collapse)"
 
     run freyja-pipeline.sh -i $VALIDINDIR -o $VALIDOUTDIR -d $VALIDINDIR -r $VALIDREF -m $VALIDMASTER -b $VALIDBARCODE
-    assert_output --partial "No sublineage map file provided. Please include a sublineage map file (-s/--sublineageMap)"
+    assert_output --partial "No collapse file provided. Please include a sublineage map file (-c/--collapse)"
 }
 
-@test "Show error if non-existent sublineage map file is provided" {
-    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $INVALIDFILE
-    assert_output --partial "does not exist. Please include an existing file and check the path provided (-s/--sublineageMap)!"
+@test "Show error if non-existent collapse map file is provided" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --collapse $INVALIDFILE
+    assert_output --partial "does not exist. Please include an existing file and check the path provided (-c/--collapse)!"
 
-    run freyja-pipeline.sh -i $VALIDINDIR -o $VALIDOUTDIR -d $VALIDINDIR -r $VALIDREF -m $VALIDMASTER -b $VALIDBARCODE -s $INVALIDFILE
-    assert_output --partial "does not exist. Please include an existing file and check the path provided (-s/--sublineageMap)!"
+    run freyja-pipeline.sh -i $VALIDINDIR -o $VALIDOUTDIR -d $VALIDINDIR -r $VALIDREF -m $VALIDMASTER -c $INVALIDFILE
+    assert_output --partial "does not exist. Please include an existing file and check the path provided (-c/--collapse)!"
 }
 
-@test "Test a run where barcodes are provided" {
-    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --sublineageMap $VALIDSUBLIN
-    result="$(diff $VALIDOUTDIR/Site-X-filtered-dataframe.csv $COMPAREDIR/with-barcodes/Site-X-filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Site-X-unfiltered-dataframe.csv $COMPAREDIR/with-barcodes/Site-X-unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/with-barcodes/Site-X-lineageMatrix.csv)"
+@test "Show error if invalid barcode file is provided" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --collapse $VALIDCOLLAPSE --barcode $INVALIDFILE
+    assert_output --partial "does not exist. Please include an existing file and check the path provided (-b/--barcode)!"
+
+    run freyja-pipeline.sh -i $VALIDINDIR -o $VALIDOUTDIR -d $VALIDINDIR -r $VALIDREF -m $VALIDMASTER -c $VALIDCOLLAPSE -b $INVALIDFILE
+    assert_output --partial "does not exist. Please include an existing file and check the path provided (-b/--barcode)!"
+}
+
+@test "Show error if both --byDate and --byWeek provided" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDINDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byDate --byWeek
+    assert_output --partial "Both the --byDate and --byWeek options have been provided. Only one can be supplied."
+}
+
+@test "Complete Run: whole-genome, by sample, existing barcodes" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-Sample/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-Sample/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-Sample/Site-X-lineageMatrix.csv)"
+    ["$result" -eq ''] 
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: whole-genome, by date, existing barcodes" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byDate
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-Date/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-Date/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-Date/Site-X-lineageMatrix.csv)"
     ["$result" -eq '']
     ["$result2" -eq '']
     ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
 }
+
+@test "Complete Run: whole-genome, by week, existing barcodes" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byWeek
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-Week/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-Week/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-Week/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+
+    [ -f ]
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: s-gene, by sample, existing barcodes" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-Sample/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-Sample/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-Sample/Site-X-lineageMatrix.csv)"
+    ["$result" -eq ''] 
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: s-gene, by date, existing barcodes" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byDate
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-Date/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-Date/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-Date/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: s-gene, by week, existing barcodes" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byWeek
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-Week/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-Week/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-Week/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+
+    [ -f ]
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
 

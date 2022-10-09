@@ -1,0 +1,9 @@
+sample,lineage,abundance,site
+01/04/2022,Omicron (BA.2),0.3,Site-1
+01/04/2022,Omicron (BA.4),0.075,Site-1
+01/04/2022,Omicron (BA.5),0.1375,Site-1
+01/04/2022,Omicron (BA.2.12.1),0.475,Site-1
+01/04/2022,Delta,0.0125,Site-1
+01/05/2022,Delta,1.0,Site-1
+02/15/2022,Omicron,0.75,Site-2
+02/15/2022,Omicron (BA.5),0.25,Site-2

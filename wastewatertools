@@ -8,23 +8,27 @@ Help() {
     echo "Modules:"
     echo ""
     echo "  - freyja_pipeline"
-    echo "  - MORE TO BE ADDED"
+    echo "  - parse_freyja_data"
+    echo "  - parse_gisaid"
+    echo "  - barcode_and_collapse"
     echo ""
     echo "To view this message:"
     echo "  wastewatertools -h"
     echo ""
     echo "To view module help messages:"
-    echo "  amplify <module> -h"
+    echo "  wastewatertools <module> -h"
     echo ""
 }
-SCRIPT_DIR=$(dirname ${BASH_SOURCE})
+SRC_DIR=$(dirname ${BASH_SOURCE})
 
 if [ "$1" = freyja_pipeline ]; then
-    "$SCRIPT_DIR"/freyja-parsing-pipeline/freyja-pipeline.sh ${@:2}
-#elif [ "$1" = calcDepth ]; then
-    #python "$SCRIPT_DIR"/ampLify-modules/calcDepth.py ${@:2}
-#elif [ "$1" = generateConsensus ]; then
-    #python "$SCRIPT_DIR"/ampLify-modules/generateConsensus.py ${@:2}
+    "$SRC_DIR"/bin/freyja-pipeline.sh ${@:2}
+elif [ "$1" = parse_freyja_data ]; then
+    python3 "$SRC_DIR"/bin/scripts/parse_freyja.py ${@:2}
+elif [ "$1" = parse_gisaid ]; then
+    python3 "$SRC_DIR"/bin/scripts/parse_gisaid_data.py ${@:2}
+elif [ "$1" = barcode_and_collapse ]; then
+    python3 "$SRC_DIR"/bin/scripts/update_barcodes_and_collapse.py ${@:2}
 elif [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     Help
 else 
