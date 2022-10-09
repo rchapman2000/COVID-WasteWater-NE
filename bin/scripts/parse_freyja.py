@@ -4,8 +4,7 @@ import argparse
 import re
 import pandas as pd
 from datetime import datetime
-import utilities #import parseDirectory, parseDate, collapseLineages, parseCSVToDF, writeDataFrame
-
+import data_manip_utils #import parseDirectory, parseDate, collapseLineages, parseCSVToDF, writeDataFrame
 
 def grabFiles(d):
     """ Gathers files matching a specific pattern from 
@@ -125,48 +124,6 @@ def getAverage(list):
     return sum(floatvals) / len(floatvals)
 
 
-def writeLineageMatrix(samples, master, lngAbunds, outfile):
-    """ Formats and outputs a file in matrix style format. The 
-    Columns represent samples/dates/weeks and the rows represent
-    a lineages. The intersection of the column and row is the abundance
-    of that lineage within the sample.
-
-    Parameters:
-        samples: A list of sample names/dates/weeks to output
-        
-        lngAbunds: a dictionary where lineages keys are paired with
-        lists of abundance values. The abundance values are present
-        at the same index in the list as their sample in the samples
-        list.
-
-        outfile: The name of a file to write the data to.
-
-    Output: 
-        Nothing to return.
-    """
-    
-    # Opens the output file and creates it if it does not exist.
-    o = open(outfile, "w+")
-    
-    # Grabs the collection date associated with each sample and appends
-    # them to a list.
-    #dates = []
-    #for s in samples:
-        #dates.append(master.loc[master['Sample'] == s].Date.values[0])
-    
-    # Writes the header column of the file by joining the list
-    # of dates with commas.
-    o.write("," + ",".join(samples) + "\n")
-
-    # Loops over the abundaces in the dicationary and writes each line joined
-    # with commas.
-    for x in lngAbunds.keys():
-        o.write(x + "," + ",".join([str(i) for i in lngAbunds[x]]) + '\n')
-
-    # Closes the output stream.
-    o.close()
-
-
 def parseByGroup(site, groups, groupCol, master, indir, sampleToFile, abunCutoff, sublinMap):
     """ Instead of parsing by samples groups the samples by either week or dates and
     calculates average abundance of lineages present in samples for those groups.
@@ -254,14 +211,14 @@ def parseByGroup(site, groups, groupCol, master, indir, sampleToFile, abunCutoff
 
             # Create a data entry for the week's lineage and add it to the unfiltered 
             # dataframe data. The entry containst the group, the lineage, and the average abundance
-            data = [g, ln, getAverage(groupLngAbunds[ln])]
+            data = [g, ln, getAverage(groupLngAbunds[ln]), site]
             sampleUnfilteredData.append(data)
 
         # Once all of the average abundances have been calculated for that group, collapses
         # the lineages and adds that to the master filtered dataframe data. 
         # Also, appends the unfiltered data for the given sample to the master unfiltered
         # dataframe data. 
-        collapsedlngs = utilities.collapseLineages(g, sampleUnfilteredData, abunCutoff, sublinMap)
+        collapsedlngs = data_manip_utils.collapseLineages(g, sampleUnfilteredData, abunCutoff, sublinMap)
         filteredData = filteredData + collapsedlngs
         unfilteredData = unfilteredData + sampleUnfilteredData
 
@@ -279,7 +236,7 @@ def main():
         action = 'store', dest = 'indir')
     parser.add_argument('-o', '--output', required = True, type=str, \
         help='[Required] - Directory to place output files', action='store', dest='outdir')
-    parser.add_argument('-s', '--sublineageMap', required = False, type = str, \
+    parser.add_argument('-s', '--sublineageMap', required = True, type = str, \
         help = '[Required] - File containing mappings to sublineages to parent lineages', \
         action = 'store', dest = 'sublin')
     parser.add_argument('-m', '--mastersheet',required=True, type=str, \
@@ -305,24 +262,22 @@ def main():
     args = parser.parse_args()
 
     # Parses the input and output directories.
-    indir = utilities.parseDirectory(args.indir)
-    outdir = utilities.parseDirectory(args.outdir)
+    indir = data_manip_utils.parseDirectory(args.indir)
+    outdir = data_manip_utils.parseDirectory(args.outdir)
 
     # Reads in the sublineage map into a pandas dataframe. If the file
     # does not exist, the script exists and notifies the user.
-    sublinMap = utilities.parseCSVToDF(args.sublin, ",", header=True)
-    #if os.path.exists(args.sublin):
-    #    sublinMap = pd.read_csv(args.sublin, header=0)
+    #sublinMap = utilities.parseCSVToDF(args.sublin, ",", header=True)
     #else:
     #    sys.exit("ERROR: File {0} does not exist!".format(args.sublin))
+    sublinMap = data_manip_utils.parseSublinMap(args.sublin)
 
-    # Abundance cutoff is 100% by default meaning that every lineage
+    # Abundance cutoff is >100% by default meaning that every lineage
     # will be collapsed regardless of abundance.
-    # If the user specified a different percent, this will be set.
-    abunCutoff = 100
+    # If the user specified a different percenunfilteredData = []
+    abunCutoff = 2
     if args.abunCutoff:
         abunCutoff = args.abunCutoff
-
 
     # Grabs the input files from the input directory
     # specified by the user.
@@ -360,12 +315,12 @@ def main():
     
     # Loops over all of the sites identified from the masterfile and
     # creates the datafiles for each.
+    masterUnfilteredData = []
+    masterFilteredData = []
     for site in sites:
         
         # Defines lists/disctionaries to store processed data.
         lngAbunds = {}
-        unfilteredData = []
-        filteredData = []
 
         # If the user would like the data grouped by week, follow this block.
         if args.byWeek:
@@ -380,9 +335,12 @@ def main():
                 weeks = master.loc[master['Site'] == site]['Week'].drop_duplicates().values.tolist()
             
             # Calculate lineage abundances and dataframe data for the weeks
-            lngAbunds, unfilteredData, filteredData = parseByGroup(site, weeks, 'Week', master, indir, sampleToFile, abunCutoff, sublinMap)
+            lngAbunds, unfiltered, filtered = parseByGroup(site, weeks, 'Week', master, indir, sampleToFile, abunCutoff, sublinMap)
+
+            masterUnfilteredData.extend(unfiltered)
+            masterFilteredData.extend(filtered)
             # Write the lineage matrix for the weeks
-            writeLineageMatrix(weeks, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
+            data_manip_utils.writeLineageMatrix(weeks, lngAbunds, outdir + site + "-lineageMatrix")
         
         # The user did not specify that data to be grouped by weeks. Thus,
         # it will be grouped by individual collection dates in each site.
@@ -398,9 +356,12 @@ def main():
                 dates = master.loc[master['Site'] == site]['Date'].drop_duplicates().values.tolist()
 
             # Calculate lineage abundances and dataframe data for the dates
-            lngAbunds, unfilteredData, filteredData = parseByGroup(site, dates, 'Date', master, indir, sampleToFile, abunCutoff, sublinMap)
+            lngAbunds, unfiltered, filtered = parseByGroup(site, dates, 'Date', master, indir, sampleToFile, abunCutoff, sublinMap)
+
+            masterUnfilteredData.extend(unfiltered)
+            masterFilteredData.extend(filtered)
             # Write the lineage matrix for the dates
-            writeLineageMatrix(dates, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
+            data_manip_utils.writeLineageMatrix(dates, lngAbunds, outdir + site + "-lineageMatrix")
         
         else:
 
@@ -414,7 +375,8 @@ def main():
 
             for s in samples:
                 lngs, abunds = parseDemix(indir + sampleToFile[s] + ".demix")
-                sampleUnfilteredData = []
+                unfiltered = []
+                filtered = []
                 # Loop over every lineage found in the file.
                 for ln in lngs:
                     # If the lineage is not already in the dictionary,
@@ -426,21 +388,22 @@ def main():
 
                     # Grab the list of abundances associated with the given lineage
                     # and insert the current sample's abundance. The abundance's position in
-                    # this list will matcht the sample's position in the list of samples
+                    # this list will match the sample's position in the list of samples
                     # for the given week.
                     lngAbunds[ln][samples.index(s)] = abunds[lngs.index(ln)]
                 
-                    data = [s, ln, lngAbunds[ln][samples.index(s)]]
-                    sampleUnfilteredData.append(data)
+                    data = [s, ln, lngAbunds[ln][samples.index(s)], site]
+                    unfiltered.append(data)
 
                 # Once all of the average abundances have been calculated for that date, collapses
                 # the lineages and adds that to the master filtered dataframe data. 
                 # Also, appends the unfiltered data for the given sample to the master unfiltered
                 # dataframe data. 
-                collapsedlngs = utilities.collapseLineages(s, sampleUnfilteredData, abunCutoff, sublinMap)
-                filteredData = filteredData + collapsedlngs
-                unfilteredData = unfilteredData + sampleUnfilteredData
-            writeLineageMatrix(samples, master, lngAbunds, outdir + site + "-lineageMatrix.csv")
+                filtered = data_manip_utils.collapseLineages(s, unfiltered, abunCutoff, sublinMap)
+                masterFilteredData.extend(filtered)
+                masterUnfilteredData.extend(unfiltered)
+
+            data_manip_utils.writeLineageMatrix(samples, lngAbunds, outdir + site + "-lineageMatrix")
         
 
         # Writes the following files 
@@ -448,9 +411,9 @@ def main():
         #    and abundance
         # 2. A filtered dataframe, which contains the same data as the unfiltered dataframe 
         #    except that the lineages have been combined into thier parent lineage.
-        dfHeader = "sample,lineage,abundance\n"
-        utilities.writeDataFrame(unfilteredData, outdir + site + "-unfiltered-dataframe", dfHeader)
-        utilities.writeDataFrame(filteredData, outdir + site + "-filtered-dataframe", dfHeader)
+    dfHeader = "sample,lineage,abundance,site\n"
+    data_manip_utils.writeDataFrame(masterUnfilteredData, outdir + "Unfiltered-dataframe", dfHeader)
+    data_manip_utils.writeDataFrame(masterFilteredData, outdir + "Filtered-dataframe", dfHeader)
 
 if __name__ == "__main__":
     main()

@@ -3,8 +3,8 @@ import os
 import argparse
 import pandas as pd
 from datetime import datetime, timedelta
-from utilities import collapseLineages, writeDataFrame, \
-    parseCSVToDF, parseDate
+from data_manip_utils import collapseLineages, writeDataFrame, \
+    parseCSVToDF, parseDate, parseSublinMap, parseDirectory
 
 def main():
     # Creates an argument parser and defines the possible arguments
@@ -15,7 +15,7 @@ def main():
         help='[Required] - path to gisaid metadata file', \
         action = 'store', dest = 'infile')
     parser.add_argument('-o', '--output', required = True, type=str, \
-        help='[Required] - Output file name', action='store', dest='outfile')
+        help='[Required] - Output directory', action='store', dest='outdir')
     parser.add_argument('-s', '--sublineageMap', required = True, type = str, \
         help = '[Required] - File containing mappings to sublineages to parent lineages', \
         action = 'store', dest = 'sublin')
@@ -35,9 +35,11 @@ def main():
     # Grabs arguments entered by the user.
     args = parser.parse_args()
 
+    outdir = parseDirectory(args.outdir)
+
     # Uses pandas to read in the metadata and sublineage map files.
     MD = parseCSVToDF(args.infile, '\t', header=True)
-    sublinMap = parseCSVToDF(args.sublin, ",",header=True)
+    sublinMap = parseSublinMap(args.sublin)
 
     # Parses in the start and end dates supplied by the user.
     startDate = parseDate(args.startDate, "%Y-%m-%d")
@@ -128,7 +130,7 @@ def main():
             # same position as the date in the dates list to the abundance.
             lngAbunds[ln][dates.index(d)] = lngPct
             # Adds the data to a list containing rows of data
-            dateData.append([d, ln, lngPct])
+            dateData.append([d, ln, lngPct, "Clinical-Data"])
         
         # Collapses the lineages for the given date based on the sublineage map
         # and cutoff specified by the user
@@ -139,13 +141,9 @@ def main():
         unfilteredData = unfilteredData + dateData
 
     # Writes the data to dataframe files
-    dfHeader = "sample,lineage,abundance\n"
-    writeDataFrame(unfilteredData, args.outfile + "-unfiltered-dataframe", dfHeader)
-    writeDataFrame(filteredData, args.outfile + "-filtered-dataframe", dfHeader)
-
-
-    
-
+    dfHeader = "sample,lineage,abundance,site\n"
+    writeDataFrame(unfilteredData, outdir + "Unfiltered-dataframe", dfHeader)
+    writeDataFrame(filteredData, outdir + "Filtered-dataframe", dfHeader)
 
 
 if __name__ == "__main__":

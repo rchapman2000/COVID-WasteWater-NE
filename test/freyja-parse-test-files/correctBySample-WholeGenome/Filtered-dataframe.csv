@@ -1,0 +1,10 @@
+sample,lineage,abundance,site
+sample1,Omicron (BA.2),0.6,Site-1
+sample1,Omicron (BA.4),0.15,Site-1
+sample1,Omicron (BA.5),0.25,Site-1
+sample2,Omicron (BA.2.12.1),0.95,Site-1
+sample2,Delta,0.025,Site-1
+sample2,Omicron (BA.5),0.025,Site-1
+sample3,Delta,1.0,Site-1
+sample4,Omicron,0.75,Site-2
+sample4,Omicron (BA.5),0.25,Site-2

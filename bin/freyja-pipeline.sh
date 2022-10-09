@@ -15,16 +15,17 @@ Help()
     echo "-d | --demixDir DEMIX_FILE_DIRECTORY - [Required] Directory to place .demix files produced by freyja. The purpose of this option is to allow for aggregation of input files with previously run data. The demix directory may contain .demix files from previous runs, and these will be included in the file output files."
     echo "-r | --reference REFERENCE - [Required] A reference fasta file to be used (Must be the same reference used to generate the input bam files)."
     echo "-m | --masterfile MASTER_FILE - [Required] A .csv file that links sample names to wastewater sites and collection dates (Format provided on Github)."
+    echo "-c | --collapse COLLAPSE_FILE - [Required] A .tsv file which consists of group labels and parent lineages to collapse under them (Format provided on Github)."
     echo "-b | --barcode BARCODE_FILE - A .csv barcode file to be used by Freyja for processing (Format provided on Github)."
-    echo "-s | --sublineageMap SUBLINEAGE_MAP - [Required] A .csv file which denotes how to collapse lineages produced by Freyja (Format provided on Github)."
-    echo "-p | --removeFromFile FILE_PATTER - A regex pattern that can be used to remove extraneous text from a sample name (Example provided on Github)."
+    echo "-p | --removeFromFile FILE_PATTERN - A regex pattern that can be used to remove extraneous text from a sample name (Example provided on Github)."
+    echo "--s_gene - Tells the pipeline to adapt for S-gene sequencing only (will modify barcodes to remove non-s-gene mutations and combine lineages identical within the s gene)"
     echo "--byDate - Produces data grouped by date rather than by individual samples"
     echo "--byWeek - Produces data grouped by week rather than by individual samples. Weeks start on Monday."
     echo "--combineAll - Produces a combined file where lineage abundances from all sites are averaged together for each day/week."
     echo
 }
 
-OPTIONS=$(getopt -o i:o:d:r:m:b:s:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,sublineageMap:,removeFromFile:,byDate,byWeek,combineAll,help -a -- "$@")
+OPTIONS=$(getopt -o i:o:d:r:m:b:c:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,collapse:,removeFromFile:,s_gene,byDate,byWeek,combineAll,help -a -- "$@")
 if [ $? -ne 0 ]
 then
     echo ""
@@ -38,9 +39,10 @@ DEMIXDIR=
 REF=
 MASTER=
 BARCODE=
-SUBLIN=
+COLLAPSE=
 PATTERN=
 BYOPTION=
+SGENE=
 BYWEEK=
 BYDATE=
 COMBINEALL=
@@ -75,13 +77,17 @@ while true; do
         BARCODE="$2"
         shift 2
         ;;
-    -s | --sublineageMap )
-        SUBLIN="$2"
+    -c | --collapse )
+        COLLAPSE="$2"
         shift 2
         ;;
     -p | --removeFromFile )
         PATTERN="--pattern $2"
         shift 2
+        ;;
+    --s_gene )
+        SGENE="--s_gene"
+        shift
         ;;
     --byDate )
         BYDATE="--byDate"
@@ -208,30 +214,14 @@ then
     exit 1
 fi
 
-BARCODEOPT=''
-if [ -z "$BARCODE" ]
+if [ -z "$COLLAPSE" ]
 then
-    echo "No barcode file provided. Updating Freyja's barcodes and proceeding"
-    BARCODEOPT='--confirmedonly'
-    echo ''
-    freyja update
-elif [ ! -f "$BARCODE" ]
-then
-    echo "File $BARCODE does not exist. Please include an existing file and check the path provided (-b/--barcode)!"
+    echo "No collapse file provided. Please include a sublineage map file (-c/--collapse)"
     echo ''
     exit 1
-else 
-    BARCODEOPT="--barcodes $BARCODE"
-fi
-
-if [ -z "$SUBLIN" ]
+elif [ ! -f "$COLLAPSE" ]
 then
-    echo "No sublineage map file provided. Please include a sublineage map file (-s/--sublineageMap)"
-    echo ''
-    exit 1
-elif [ ! -f "$SUBLIN" ]
-then
-    echo "File $SUBLIN does not exist. Please include an existing file and check the path provided (-s/--sublineageMap)!"
+    echo "File $COLLAPSE does not exist. Please include an existing file and check the path provided (-c/--collapse)!"
     echo ''
     exit 1
 fi
@@ -252,11 +242,66 @@ else
 fi
 
 
+
 FREYJA_DIR=$OUTDIR"freyja-results/"
 if [ ! -d "${OUTDIR}freyja-results/" ]
 then
     mkdir $FREYJA_DIR
 fi
+
+if [ -n "$SGENE" ]
+then
+    echo "The S-Gene option was supplied."
+    echo "Barcodes used to classify lineages will be modified to remove any mutations outside of the s gene"
+    echo "Lineages with identical S gene mutation profiles will be grouped together"
+    echo ''
+fi
+
+BARCODEOPT=''
+BARCODE_DIR=$OUTDIR"barcodes-and-collapse/"
+if [ -z "$BARCODE" ]
+then
+    echo "No barcode file provided. Updated barcodes will be created using Freyja"
+    BARCODEOPT='--confirmedonly'
+    echo ''
+
+    if [ ! -d "$BARCODE_DIR" ]
+    then
+        mkdir $BARCODE_DIR
+    fi
+    
+    python3 $SCRIPT_DIR"scripts/update_barcodes_and_collapse.py" -o $BARCODE_DIR -c $COLLAPSE $SGENE
+
+    if [ -n "$SGENE" ]
+    then 
+        BARCODEOPT=$BARCODE_DIR"S_Gene_barcodes.csv"
+    else
+        BARCODEOPT=$BARCODE_DIR"filtered_barcodes.csv"
+    fi
+
+elif [ ! -f "$BARCODE" ]
+then
+    echo "File $BARCODE does not exist. Please include an existing file and check the path provided (-b/--barcode)!"
+    echo ''
+    exit 1
+else 
+    echo "Barcode file $BARCODE supplied."
+
+    if [ ! -d "$BARCODE_DIR" ]
+    then
+        mkdir $BARCODE_DIR
+    fi
+    python3 $SCRIPT_DIR"scripts/update_barcodes_and_collapse.py" -i $BARCODE -o $BARCODE_DIR -c $COLLAPSE $SGENE
+
+    if [ -n "$SGENE" ]
+    then 
+        BARCODEOPT=$BARCODE_DIR"S_Gene_barcodes.csv"
+    else
+        BARCODEOPT=$BARCODE_DIR"filtered_barcodes.csv"
+    fi
+fi
+
+SUBLINEAGE_MAP=$BARCODE_DIR"sublineage-map.tsv"
 
 echo "Performing Variant Calling"
 echo ''
@@ -273,10 +318,10 @@ for file in $FREYJA_DIR*-variants.tsv
 do
     base=$(basename $file -variants.tsv)
     echo $base
-    freyja demix $file "${FREYJA_DIR}${base}-depths.tsv" --output "${FREYJA_DIR}${base}.demix" $BARCODEOPT 
+    freyja demix $file "${FREYJA_DIR}${base}-depths.tsv" --output "${FREYJA_DIR}${base}.demix" --barcodes $BARCODEOPT
 done
 echo ''
 
 cp $FREYJA_DIR*.demix $DEMIXDIR
-echo "python3 ${SCRIPT_DIR}scripts/parse_freyja.py -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYOPTION $COMBINEALL"
-python3 $SCRIPT_DIR"scripts/parse_freyja.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLIN -m $MASTER $PATTERN $BYOPTION $COMBINEALL
+echo "python3 ${SCRIPT_DIR}scripts/parse_freyja.py -i $DEMIXDIR -o $OUTDIR -s $SUBLINEAGE_MAP -m $MASTER $PATTERN $BYOPTION $COMBINEALL"
+python3 $SCRIPT_DIR"scripts/parse_freyja.py" -i $DEMIXDIR -o $OUTDIR -s $SUBLINEAGE_MAP -m $MASTER $PATTERN $BYOPTION $COMBINEALL

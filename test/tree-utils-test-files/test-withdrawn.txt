@@ -1,0 +1,5 @@
+*B.2.1	Withdrawn: Reassigned to B.40
+*B.2.6	Withdrawn: Reassigned to B.35
+*C.15	Withdrawn: Alias of B.1.1.1.15, Denmark lineage
+*B.1.1.2	Withdrawn: UK and Australia
+*GG.2	This should be invalid

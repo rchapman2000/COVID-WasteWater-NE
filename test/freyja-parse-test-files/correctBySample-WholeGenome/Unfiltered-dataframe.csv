@@ -1,0 +1,12 @@
+sample,lineage,abundance,site
+sample1,BA.2,0.6,Site-1
+sample1,BA.4.1.1,0.15,Site-1
+sample1,BA.5,0.15,Site-1
+sample1,BA.5.6.2,0.1,Site-1
+sample2,BA.2.12.1,0.95,Site-1
+sample2,AY.5,0.025,Site-1
+sample2,BA.5.6.2,0.025,Site-1
+sample3,AY.5,1.0,Site-1
+sample4,BA.1,0.5,Site-2
+sample4,BA.1.1,0.25,Site-2
+sample4,BA.5.2.25,0.25,Site-2
