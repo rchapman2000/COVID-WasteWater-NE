@@ -482,8 +482,50 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
 
         # If the lineage does not exist in the tree
         if not checkLineageExists(tree, lin):
-            # Add it to the list of not found lineages
-            notFoundLins.append(lin)
+
+            # The lineage may still be classifiable, as some contain
+            # an existing lineage within their name (Ex: BA.2.75_dropout)
+            # Thus, we can try to catch that lineage using a regular expression
+            
+            # Defines a regex pattern that will match to a lineage and
+            # place it within a capture group.
+            lineageRegexPattern = r"(\w{1,3}(?:\.\d+)+)"
+
+            # Searches the lineage using the regex pattern
+            lineageSearch = re.search(lineageRegexPattern, lin)
+
+            # Checks whether a lineage was found within the name
+            if lineageSearch:
+
+                # If so, grab the capture group
+                linInName = lineageSearch.group(1)
+
+                # Check whether the lineage in the name exists in 
+                # the tree.
+                if checkLineageExists(tree, linInName):
+                    
+                    # If it does exist, we can find where that
+                    # lineage is placed in the sublineage map,
+                    # and add the unknown lineage to that group 
+                    
+                    # Loop over every group in the sublineage map
+                    for g in sublineageMap.keys():
+
+                        # Check whether the lineage from within the
+                        # unknown's name is found in that group
+                        if linInName in sublineageMap[g]:
+                            # If so, add the unknown lineage under that group
+                            sublineageMap[g].append(lin)
+                            # Break to prevent unecessary comparisons
+                            break
+                # If the lineage pulled from the name does not exist, add
+                # the unknown lineages to the unknown list
+                else:
+                    notFoundLins.append(lin)
+            # If no lineage pattern was found in the lineage's name
+            else:
+                # Add it to the list of not found lineages
+                notFoundLins.append(lin)
 
     if len(notFoundLins) != 0:
         # Create a new group in the sublineage map 

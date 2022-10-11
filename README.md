@@ -10,7 +10,30 @@ To accomplish this our pipeline creates a tree data structure containing SARS-Co
 - [Lineage Alias Key](https://github.com/cov-lineages/pango-designation/blob/master/pango_designation/alias_key.json)
 - [nCoV Clades JSON](https://github.com/nextstrain/ncov-clades-schema/blob/master/src/clades.json)
 # Installation
-**Under Development**
+To install this pipeline, enter the following commands:
+```
+# Clone the repository
+git clone https://github.com/rchapman2000/COVID-WasteWater-NE
+
+# Create a conda environment using the provided environment.yml file
+conda env create -f environment.yml
+
+# Activate the conda environment
+conda activate WasteWater
+```
+## Updating the Pipeline
+If you already have the pipeline installed, you can update it using the following commands:
+```
+# Navigate to your installation directory
+cd COVID-WasteWater-NE
+
+# Use git pull to get the lastest update
+git pull
+
+# Activate the conda environment and use the environment.yml file to download updates
+conda activate WasteWater
+conda env update --file environment.yml --prune
+```
 
 # Sequencing Pre-Processing of Sequencing Data
 Before running our pipeline, NGS data must undergo preprocessing. The necessary steps include:
