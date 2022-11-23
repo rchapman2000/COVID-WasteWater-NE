@@ -265,11 +265,7 @@ def main():
     indir = data_manip_utils.parseDirectory(args.indir)
     outdir = data_manip_utils.parseDirectory(args.outdir)
 
-    # Reads in the sublineage map into a pandas dataframe. If the file
-    # does not exist, the script exists and notifies the user.
-    #sublinMap = utilities.parseCSVToDF(args.sublin, ",", header=True)
-    #else:
-    #    sys.exit("ERROR: File {0} does not exist!".format(args.sublin))
+    # Reads in the sublineage map into a dictionary.
     sublinMap = data_manip_utils.parseSublinMap(args.sublin)
 
     # Abundance cutoff is >100% by default meaning that every lineage

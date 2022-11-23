@@ -18,7 +18,7 @@ TEST_FILE_DIR = SCRIPT_DIR + "/update-barcodes-and-collapse-test-files"
 
 def cleanUpFiles():
     FilesToRemove = ["S_Gene_barcodes.csv", "S_Gene_Unfiltered.csv", "S-Gene-Indistinguishable-Groups.txt", "sublineage-map.tsv", "filtered_barcodes.csv", "public-latest.all.masked.pb.gz", \
-                        "alias_key.json", "lineages.txt", "NSClades.json", "usher_barcodes.csv", "curated_lineages.json"]
+                        "alias_key.json", "lineages.txt", "NSClades.json", "raw_barcodes.csv", "curated_lineages.json"]
 
     for f in FilesToRemove:
         fp = TEST_FILE_DIR + "/" + f

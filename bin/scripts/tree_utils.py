@@ -3,6 +3,7 @@ import os
 from treelib import Node, Tree
 import urllib.request as ur
 import json
+import math
 import re
 
 def checkLineageExists(tree, lin):
@@ -266,9 +267,14 @@ def getCommonLineageParent(tree, lins):
     return parent
 
 def convertLongAlias(lin, aliases):
-    """ Takes an unaliased lineage and converts it to the aliased name. Aliasing is
-    done to shorten the names of long lineages. The alias replaces the first 
-    3 or 6 numbers in a lineage with letters (Ex: BA.5 = B.1.1.529.5).
+    """ Within the alias_key file, aliases are mapped directly to their unaliased equivalents.
+    Each time a lineage hits more than 3 levels within its name, it becomes aliased. Ex: BA.5 = BA.1.1.529.5.
+    For aliases such as this, placing a child on the tree is simple, as the alias will be the direct parent
+    However, some aliases correspond to mupltiple levels of aliasing (Ex: BE = B.1.1.529.5.3.1), which makes placing 
+    these lineages on the tree difficult. Within these longer unaliased lineage equivalent, there is an aliase itself
+    (Ex: BE = B.1.1.529.5.3.1 = BA.5.3.1). When trying to place variants like this ont eh tree, their exact
+    unalised lineage will not be present on the tree (as we place aliased lineages on the tree). Thus, we need to re-alias
+    these variants in order to find the correct parent.
 
     Parameters:
         lin: the lineage to be aliased
@@ -281,44 +287,43 @@ def convertLongAlias(lin, aliases):
     # Splits the given lineage into a list at each '.' character
     split = lin.split(".")
 
-    # Because an alias replaces the first 4 or 7 characters (single letter + 3/6 numbers),
-    # we just need to find the alias corresponding to these characters
-    # and tack on the extra characters. 
+    # Creates a variable to store the realiased lineage
     aliasedLineage = None
-    if len(split) > 7:
-        # If the lineage has more than 7 characters,
-        # concatenate the first 7 characters into a string, 
-        # and identify the corresponding alias.
-
-        aliasedLineage = None
-
-        # Loops over every alias in the dictionary
-        for a in aliases.keys():
-            # If the first 7 characters of the lineage = the alias' lineage
-            if ".".join(split[:7]) == aliases[a]:
-
-                # Concatenate the alias with the remaining characters
-                aliasedLineage =  a + "." + ".".join(split[7:])
-
-    elif len(split) > 4:
-        # If the lineage has more than 4 characters but less than 7
-        # concatenate the first 4 characters into a string, 
-        # and identify the corresponding alias.
-
-        aliasedLineage = None
-        # Loops over every alias in the dictionary
-        for a in aliases.keys():
-
-            # If the first 7 characters of the lineage = the alias' lineage
-            if ".".join(split[:4]) == aliases[a]:
-
-                # Concatenate the alias with the remaining characters
-                aliasedLineage =  a + "." + ".".join(split[4:])
-    # If the lineage contains 4 characters or less, there is no need
-    # to alias it.
-    else:
-        aliasedLineage = lin
     
+    # Because each "levels" (or up to 3 numbers separated by a '.') make an
+    # aliase, we need to determine the number of levels present in the lineage.
+    # Thus, we can use the length of the lineage split at the '.' character
+    # to determine this. We first need to subract 1 (to account for the letter in the 
+    # lienage name) and then divide by 3. We then perform a ceiling operation to account for
+    # 'partially filled' levels (Ex: B.1.1.529.5.2 contains 5 numbers separated by '.', which would be 
+    # 2 groups of 3 (5 / 3 = 1.5, so performing a ceiling operation will get us to 2) )
+    aliasLevels = math.ceil((len(split) - 1) / 3)
+
+    # If there is only 1 level in the lineage name, we can simply return
+    # the lineage, as no re-aliasing will be required.
+    if aliasLevels == 1:
+        aliasedLineage = lin
+
+    # If there is more than 1 level, then we will need to realias the 
+    # lineage.
+    else:
+        # When realiasing, we want to chance everything except the last level of
+        # the lineage. Thus, we need to find the correct point in the full lineage name
+        # to split and add the alias at. We can subtract 1 from the number of alias levels, 
+        # and then multiply by 3. Finally, we need to add 1 character to account for the letter
+        # character at the beginning of the lineage.
+        pointToAlias = ((aliasLevels - 1) * 3) + 1
+
+        # Now, loop over every alias in the dictionary
+        for a in aliases.keys():
+
+            # If the portion of the linaege to be aliased matches the value. Then the aliase should replace
+            # this portion in the parent name.
+            if ".".join(split[:pointToAlias]) == aliases[a]:
+
+                # Concatenate the alias with the remaining characters
+                aliasedLineage =  a + "." + ".".join(split[pointToAlias:])
+
     # Return the aliased (or not if <= 4 characters) lineage
     return aliasedLineage
 

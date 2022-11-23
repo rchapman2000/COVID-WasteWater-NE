@@ -1,9 +1,9 @@
 # COVID-WasteWater-NE
 The purpose of this repository is to house scripts for the automation of SARS-CoV-2 wastewater surveillance processing in Nebraska. Specifically, the anlaysis presented was tested and used on illumina sequencing data produced using the IDT [xGen SARS-CoV-2 Sgene amplicon sequencing panel](https://www.idtdna.com/pages/products/next-generation-sequencing/workflow/xgen-ngs-amplicon-sequencing/predesigned-amplicon-panels/sars-cov-2-amp-panel#product-details) (previously produced by Swift BioSciences) as this is a cheaper and scalable alternative to whole-genome sequencing of wastewater. 
 
-The tool present in this repository, **Wastewater Tools**, contains a set of bioinformatics scripts related to the processing of wastewater data. The intended analysis makes use of the existing tool [Freyja](https://github.com/andersen-lab/Freyja) ([Karthikeyan et al., 2022](https://www.nature.com/articles/s41586-022-05049-6)). Since Freyja was developed for whole-genome sequencing, our scripts and pipeline adapt this approach for targetted sequencing of the S-gene. 
+The tool present in this repository, **Wastewater Tools**, contains a set of bioinformatics scripts related to the processing of wastewater data. The intended analysis makes use of the existing tool [Freyja](https://github.com/andersen-lab/Freyja) ([Karthikeyan et al., 2022](https://www.nature.com/articles/s41586-022-05049-6)). Since Freyja was developed for whole-genome sequencing, our scripts and pipeline adapt this approach for targeted sequencing of the S-gene. 
 
-Additionally, the utility of our scripts comes from the incremental nature of the output. By this, we mean that newly run data can be combined with previously run data, making it easier to continuously monitor wastewater data. One issue with this is that new SARS-CoV-2 lineages are constantly being discovered and other tools would require data to be *re-run* each time new lineages are added. Our pipeline circumvents this issue through its use of a 'sublineage-map' data structure. The utility of this datastructure is explained further in teh [Sublineage Map Section](#sublineage-map)
+Additionally, the utility of our scripts comes from the incremental nature of the output. By this, we mean that newly run data can be combined with previously run data, making it easier to continuously monitor wastewater data. One issue with this is that new SARS-CoV-2 lineages are constantly being discovered and other tools would require data to be *re-run* each time new lineages are added. Our pipeline circumvents this issue through its use of a 'sublineage-map' data structure. The utility of this data structure is explained further in teh [Sublineage Map Section](#sublineage-map)
 
 To accomplish this our pipeline creates a tree data structure containing SARS-CoV-2 lineages, making use of data from the [Pango Lineages Github](https://github.com/cov-lineages/pango-designation) and [Nextstrain's Clade Scheme Github](https://github.com/nextstrain/ncov-clades-schema) including:
 - [Lineage Designation List](https://github.com/cov-lineages/pango-designation/blob/master/lineage_notes.txt)
@@ -27,7 +27,7 @@ If you already have the pipeline installed, you can update it using the followin
 # Navigate to your installation directory
 cd COVID-WasteWater-NE
 
-# Use git pull to get the lastest update
+# Use git pull to get the latest update
 git pull
 
 # Activate the conda environment and use the environment.yml file to download updates
@@ -41,17 +41,17 @@ Before running our pipeline, NGS data must undergo preprocessing. The necessary 
 2. Primer Clipping (utilizing the [Primerclip](https://github.com/swiftbiosciences/primerclip#readme) software built to handle the xGen amplicon primers)
 3. Alignment to a Reference Genome
 
-This repository does not currently contain a script or pipeline that can be used for preprocessing. We recommend using the [TAYLOR Pipeline](https://github.com/greninger-lab/covid_swift_pipeline) developed by the Greninder Lab for IDT xGen amplicon sequencing data. The pipeline will produce .bam alignment files that can be used as input for our pipelines.
+This repository does not currently contain a script or pipeline that can be used for preprocessing. We recommend using the [TAYLOR Pipeline](https://github.com/greninger-lab/covid_swift_pipeline) developed by the Greninger Lab for IDT xGen amplicon sequencing data. The pipeline will produce .bam alignment files that can be used as input for our pipelines.
 
-# General Technical Consideations
+# General Technical Considerations
 This pipeline does not consider proposed, misc., or recombinant lineages in its processing. Thus, these lineages will not be called by Freyja.
-# S Gene Technical Considerations
-To classify lineages, Freyja uses mutation profiles dervied from Gisaid sequences placed on the [USHER SARS-CoV-2 Tree](https://github.com/yatisht/usher). However, sequencing the s-gene alone gives 0 coverage of regions outside of the s-gene which can skew Freyja's demixing algorithm. Thus, to solve for this, we can remove the mutations outside of the s-gene from the profiles. In turn, this creates another issue, as some lineages will have identical S-gene mutation profiles (as they have lineage defining mutations outside of the S-gene).
+# S-Gene Technical Considerations
+To classify lineages, Freyja uses mutation profiles derived from Gisaid sequences placed on the [USHER SARS-CoV-2 Tree](https://github.com/yatisht/usher). However, sequencing the s-gene alone gives 0 coverage of regions outside of the s-gene which can skew Freyja's demixing algorithm. Thus, to solve for this, we can remove the mutations outside of the s-gene from the profiles. In turn, this creates another issue, as some lineages will have identical S-gene mutation profiles (as they have lineage defining mutations outside of the S-gene).
 
 To solve for this, our pipeline creates *groups* to represent the s-gene identical lineages. Thus, Freyja's output will contain calls of these groups rather than individual lineages. Using our [Sublineage Map](#sublineage-map) data structure, we collapse these groups under their corresponding parent class, providing accurate results at this resolution.
 
 ## Group Names
-The naming of these S gene identical groups is important to ensuring that group remains unique, remains human interprettable, and can be traced to the lineages that comprise it, if necessary. The naming scheme is the following:
+The naming of these S-Gene identical groups is important to ensuring that group remains unique, remains human interpretable, and can be traced to the lineages that comprise it, if necessary. The naming scheme is the following:
 
 GROUP-PARENT_Sublineages_Like_FIRST-LINEAGE-IN-GROUP-ALPHABETICAL
 
@@ -63,10 +63,10 @@ B.1,B.2,B.3,A.3 would be named B/A_Sublineages_Like_B.1 (As only B sublineages w
 
 # Modules
 Wastewater tools contains several different modules pertinent to the analysis of wastewater data. These modules include
-- Freyja Pipeline - automates the process of running wastewater data through Freyja and parsing of Freyja output into an analyzeable format. Additionally, it can combine newly processed data with previous runs to create a continuous data output.
+- Freyja Pipeline - automates the process of running wastewater data through Freyja and parsing of Freyja output into an analyzable format. Additionally, it can combine newly processed data with previous runs to create a continuous data output.
 - Parse Freyja Data - This module is a standalone parser of freyja data. While this feature is included in the freyja pipeline. It is often helpful to parse the same set of data in multiple different ways (such as grouped by both date and week).
-- Barcode and Collapse - This module is a standalone version of what is included in the pipeline. It can take a set of barcodes (or alternatively donwload the latest barcdoes using Freyja) and will generate a desired sublineage map. Additionally, the barcodes provided can be modified for S-gene sequencing.
-- Gisaid Metadata Parser - This module takes a set of Gisaid metadata and generate a visualizeable data format similar to the output of the freyja pipeline. This allows for direct comparison of wastewater and patient data.
+- Barcode and Collapse - This module is a standalone version of what is included in the pipeline. It can take a set of barcodes (or alternatively download the latest barcodes using Freyja) and will generate a desired sublineage map. Additionally, the barcodes provided can be modified for S-gene sequencing.
+- Gisaid Metadata Parser - This module takes a set of Gisaid metadata and generate a visualizable data format similar to the output of the freyja pipeline. This allows for direct comparison of wastewater and patient data.
 
 # Important File Formats
 Many of the modules of wastewater tools require input files of differing formats. This section details the purpose and format of each.
@@ -138,8 +138,8 @@ The sublineage map structure is crucial to not needing to update the pipeline. N
 
 *Images to be added*
 
-### S Gene cases
-The utility can be seen in the case S gene samples when new lineages are added. If one lineage was on its own one week, but a new lineages with an identical S-gene profile is added. The lineage which has previously been called on its own is now called as a group. However the computer would not see the group name and lineage name as the same, causing a discrepancy. 
+### S-Gene cases
+The utility can be seen in the case S-Gene samples when new lineages are added. If one lineage was on its own one week, but a new lineages with an identical S-gene profile is added. The lineage which has previously been called on its own is now called as a group. However the computer would not see the group name and lineage name as the same, causing a discrepancy. 
 
 *Images to be added*
 
@@ -174,7 +174,7 @@ wastewatertools freyja_pipeline -i INPUT_DIRECTORY \
 | -c | --collapse | File |A .tsv file which consists of group labels and parent lineages to collapse under them ([Format](#collapse-file)). | Required |
 | -b / --barcode | File | A barcode file to be used by Freyja for processing ([Format](#barcode-file)). If this file is not provided, the default barcode file included in freyja will be updated and used. | Optional |
 | -p / --pattern | Text | A regex pattern that can be used to remove extraneous text from a sample name. (Must be enclosed in single quotes) (Example: the pattern '.+?(?=\_S\d\*_L\d\*)' removes the pattern '_S##_L###' commonly added by illumina sequencers) | Optional |
-| --s_gene | None | Tells the pipeline to expect S-Gene only sequencing data. Mutations outside of the s gene will be removed from barcodes and s-gene identical groups will be created. | Optional |
+| --s_gene | None | Tells the pipeline to expect S-Gene only sequencing data. Mutations outside of the S-Gene will be removed from barcodes and s-gene identical groups will be created. | Optional |
 | --byDate| None | Produces data grouped by date rather than by individual sample (Masterfile must include a date column for each sample). | Optional (Cannot include both --byDate and --byWeek) |
 | --byWeek | None | Produces data grouped by week rather than buy individual sample (Masterfile must include a week column for each sample). | Optional (Cannot include both --byDate and --byWeek) |
 | --combineAll | None | Adds additional values to the dataframe considering all of the sites for that day/week. | Optional |
@@ -200,13 +200,13 @@ Inside of the output directory the matrix and dataframe files are the primary ou
 
 **Output File Descriptions:**
 
-- **Matrix File:** (CSV Format) Each row of the matrix represets a Variant and each column represents a sample/date/week present. The cells within the matrix contain 0 or 1 representing if the variant was present in that sample/week/date. This format is useful for human visualization
+- **Matrix File:** (CSV Format) Each row of the matrix represents a Variant and each column represents a sample/date/week present. The cells within the matrix contain 0 or 1 representing if the variant was present in that sample/week/date. This format is useful for human visualization
 - **Dataframe Files:** (CSV Format) These files are useful for graphing and visualization as they can be easily imported into R or pandas dataframe objects. These files contain the columns **sample, lineage, abundance, site**. Each row represents a lineages present in a given sample (Example: 1,Delta,0.855).
    - **unfiltered dataframe** - a dataframe file where no lineages have been collapsed based on the sublineage map.
-   - **filtered dataframe** - a dataframe file containg the lineages combined into their parent based on the sublineage map.
+   - **filtered dataframe** - a dataframe file containing the lineages combined into their parent based on the sublineage map.
 
 # Standalone Parse Freyja Data Module
-This module completes the last part of the freyja pipeline: parsing the freyja output data into a visualizeable format. **Note**, this functionality is *already included* in the pipeline, and thus you do not **need** to run this separately. However, it is often useful to rerun this step separate from freyja such as wanting to group data by sample, date, or week (only one can be selected per run of the pipeline) or running with a differen sublineage map to collapse lineages in an alternative manner.
+This module completes the last part of the freyja pipeline: parsing the freyja output data into a visualizable format. **Note**, this functionality is *already included* in the pipeline, and thus you do not **need** to run this separately. However, it is often useful to rerun this step separate from freyja such as wanting to group data by sample, date, or week (only one can be selected per run of the pipeline) or running with a different sublineage map to collapse lineages in an alternative manner.
 
 ## Running the Parse Freyja Data Module
 To run this module, the following command can be run:
@@ -244,10 +244,10 @@ Inside of the output directory the matrix and dataframe files are the primary ou
 
 **Output File Descriptions:**
 
-- **Matrix File:** (CSV Format) Each row of the matrix represets a Variant and each column represents a sample/date/week present. The cells within the matrix contain 0 or 1 representing if the variant was present in that sample/week/date. This format is useful for human visualization
+- **Matrix File:** (CSV Format) Each row of the matrix represents a Variant and each column represents a sample/date/week present. The cells within the matrix contain 0 or 1 representing if the variant was present in that sample/week/date. This format is useful for human visualization
 - **Dataframe Files:** (CSV Format) These files are useful for graphing and visualization as they can be easily imported into R or pandas dataframe objects. These files contain the columns **sample, lineage, abundance, site**. Each row represents a lineages present in a given sample (Example: 1,Delta,0.855).
    - **unfiltered dataframe** - a dataframe file where no lineages have been collapsed based on the sublineage map.
-   - **filtered dataframe** - a dataframe file containg the lineages combined into their parent based on the sublineage map.
+   - **filtered dataframe** - a dataframe file containing the lineages combined into their parent based on the sublineage map.
 
 
 # Barcode And Collapse Module
@@ -271,7 +271,7 @@ Additionally, note that this module **filters out proposed lineages, misc lineag
 | -o / --outdir | Directory Path | Directory to place output files | Required |
 | -c | --collapse | File |A .tsv file which consists of group labels and parent lineages to collapse under them ([Format](#collapse-file)). | Required |
 | -i / --input | File | If you wish to convert an existing barcode file into one containing only S-Gene mutations, a barcode file can be supplied as input. (NOTE: the module will skip the ```freyja update``` command) | Optional |
-| --s_gene | None | Tells the script to parse the barcodes to prepare for S gene sequencing Mutations outside of the s gene will be removed from barcodes and s-gene identical groups will be created. | Optional |
+| --s_gene | None | Tells the script to parse the barcodes to prepare for S-Gene sequencing Mutations outside of the S-Gene will be removed from barcodes and s-gene identical groups will be created. | Optional |
 
 
 ## Barcode And Collapse Module Module Output
@@ -279,7 +279,7 @@ Additionally, note that this module **filters out proposed lineages, misc lineag
 ### Whole Genome
 ```
 Output Directory/
-├── alias_key.json - a json file maping aliases to their given lineages
+├── alias_key.json - a json file mapping aliases to their given lineages
 ├── curated_lineages.json - 'freyja update' output file
 ├── lineages.txt - a list of all current lineages taken from cov-lineages
 ├── NSClades.json - a json file containing data about the current SARS-CoV-2 Nextstrain Clades
@@ -287,10 +287,10 @@ Output Directory/
 ├── filtered_barcodes.csv - barcodes that have had proposed, misc., and recombinant lineages removed.
 └── sublineage-map.tsv - the sublineage map produced based on the collapse file provided by the user.
 ```
-### S Gene
+### S-Gene
 ```
 Output Directory/
-├── alias_key.json - a json file maping aliases to their given lineages
+├── alias_key.json - a json file mapping aliases to their given lineages
 ├── curated_lineages.json - 'freyja update' output file
 ├── lineages.txt - a list of all current lineages taken from cov-lineages
 ├── NSClades.json - a json file containing data about the current SARS-CoV-2 Nextstrain Clades
@@ -300,14 +300,14 @@ Output Directory/
 ├── S-Gene-Indistinguishable-Groups.txt - a text files containing s-gene identical groupings. 
                                           Can be searched to find what lineages fall under a 
                                           certain group.
-├── S_Gene_Unfiltered.csv - a barcode file containing only s gene mutations, but lineages 
+├── S_Gene_Unfiltered.csv - a barcode file containing only S-Gene mutations, but lineages 
                             with the same mutation profile have not been combined
-└── S_Gene_barcodes.csv - the final S-gene barcodes file where lieages with the same mutation 
+└── S_Gene_barcodes.csv - the final S-gene barcodes file where lineages with the same mutation 
                       profile have been combined
 ```
 
 **Combined Lineage Example:**
-The S-gene barcode module combines lineages with the same S gene profile into a singe entry. The combined lineage will then be represented as a list of lineages separated by pipe characters. 
+The S-gene barcode module combines lineages with the same S-Gene profile into a singe entry. The combined lineage will then be represented as a list of lineages separated by pipe characters. 
 
 ```
 Example:
@@ -317,7 +317,7 @@ B|B.1|B.1.1|B.2
 Your [Sublineage Map](#sublineage-map) file will need to reflect this in the lineage column.
 
 # Gisaid Metadata Parser Module
-The gisaid metadata parser module can be used to generate dataframe files for visualization for gisaid metadata. This functionality is useful to compare wastewaterand patient data together.
+The Gisaid metadata parser module can be used to generate dataframe files for visualization for Fisaid metadata. This functionality is useful to compare wastewater and patient data together.
 
 ## Running the Gisaid Metadata Parser Module
 To run this module, the following command can be used:
@@ -340,3 +340,27 @@ wastewatertools parse_gisaid -i INFILE \
 | --endDate | Date | The final date in the range of data to be parsed (Format: YYYY-MM-DD) | Required |
 | --abundanceThreshold | Abundance threshold below which a lineage will be collapsed with its parent [Default: Collapse all Lineages] | Optional |
 | --byWeek | Produce data grouped by week rather than date | Optional | 
+
+
+# Get Mutation Profile Module
+The Get Mutation Profile module can be used to isolate mutation profiles of specified lineages for manual comparison. 
+
+A single lineage or list of lineages separated by commas can be supplied, and the mutation profiles will be aggregated into one output CSV file. This module also takes into account the fact that individual lineages may be present in S-Gene identical groups. Thus, it also outputs a summary file that notes whether a lineage is member in a certain S-gene identical group and lists the other lineages present in the group.
+
+*Note: automated test cases for this module are in development*
+## Running the Get Mutation Profile Module
+To run this module, the following command can be used:
+```
+wastewatertools get_mutation_profile -l LINEAGES \
+    -o OUTPREF \
+    -s SUBLINEAGE_MAP \
+    -b BARCODE_FILE
+```
+
+### Get Mutation Profile Module Options
+| Option | Argument | Description | Requirement |
+| ------ | -------- | ----------- | -------- |
+| -l / --lineages | String | One or more lineages who's mutation profiles you would like to search. Multiple lineages should be supplied in a list separated by commas (Ex: -l BA.5 or -l BA.1,BA.2,BA.3) | Required |
+| -o / --outpref | String | A prefix to name output files | Required |
+| -s / --sublineageMap | File | A .csv file which denotes how to collapse lineages produced by Freyja ([Format](#sublineage-map)). | Required |
+| -b / --barcodes | File | A .csv file containing mutation barcodes for various lineages to be searched ([Format](#barcode-file)) | Required |

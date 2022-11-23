@@ -173,12 +173,14 @@ class TestLineageTreeUtils(unittest.TestCase):
         normalLin2 = "B.1.117.3"
         linWAlias = "BA.1"
         linWNestedAlias = "BE.1"
+        linWLongNestedAlias = "CW.1"
 
         self.assertEqual(parseParentFromLineage(linWrootParent, aliases), "root")
         self.assertEqual(parseParentFromLineage(normalLin1, aliases), "B")
         self.assertEqual(parseParentFromLineage(normalLin2, aliases),"B.1.117")
         self.assertEqual(parseParentFromLineage(linWAlias, aliases), "B.1.1.529")
         self.assertEqual(parseParentFromLineage(linWNestedAlias, aliases), "BA.5.3.1")
+        self.assertEqual(parseParentFromLineage(linWLongNestedAlias, aliases), "BQ.1.1.14")
 
     def test_parseParentFromLineage_invalid(self):
         linWNoExistingAlias = "GG.5"

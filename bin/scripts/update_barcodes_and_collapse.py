@@ -718,6 +718,7 @@ def main():
     # variants with identical S gene mutation profiles, and add these
     # groupsings to the collapse map
     if args.sgene:
+        print("S-Gene Option supplied.\nModifying barcodes and sublineage map to account for S-gene identical variants\n")
         # Saves the start and end positions of the SARS-CoV-2 S gene
         s_gene_start = 21563
         s_gene_end = 25384
