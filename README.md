@@ -339,8 +339,8 @@ wastewatertools parse_gisaid -i INFILE \
 | -s / --sublin | File | A .csv file which denotes how to collapse lineages produced by Freyja ([Format](#sublineage-map)). | Required |
 | --startDate | Date | The first date in the range of data to be parsed (Format: YYYY-MM-DD) | Required |
 | --endDate | Date | The final date in the range of data to be parsed (Format: YYYY-MM-DD) | Required |
-| --abundanceThreshold | Abundance threshold below which a lineage will be collapsed with its parent [Default: Collapse all Lineages] | Optional |
-| --byWeek | Produce data grouped by week rather than date | Optional | 
+| --abundanceThreshold | Integer | Abundance threshold below which a lineage will be collapsed with its parent [Default: Collapse all Lineages] | Optional |
+| --byWeek | None | Produce data grouped by week rather than date | Optional | 
 
 
 # Get Mutation Profile Module
