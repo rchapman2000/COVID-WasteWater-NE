@@ -65,8 +65,9 @@ B.1,B.2,B.3,A.3 would be named B/A_Sublineages_Like_B.1 (As only B sublineages w
 Wastewater tools contains several different modules pertinent to the analysis of wastewater data. These modules include
 - Freyja Pipeline - automates the process of running wastewater data through Freyja and parsing of Freyja output into an analyzable format. Additionally, it can combine newly processed data with previous runs to create a continuous data output.
 - Parse Freyja Data - This module is a standalone parser of freyja data. While this feature is included in the freyja pipeline. It is often helpful to parse the same set of data in multiple different ways (such as grouped by both date and week).
-- Barcode and Collapse - This module is a standalone version of what is included in the pipeline. It can take a set of barcodes (or alternatively download the latest barcodes using Freyja) and will generate a desired sublineage map. Additionally, the barcodes provided can be modified for S-gene sequencing.
+- Barcode and Collapse - This module is a standalone version of a functionality built into the Freyja Pipeline. It can take a set of barcodes (or alternatively download the latest barcodes using Freyja) and will generate a desired sublineage map. Additionally, the barcodes provided can be modified for S-gene sequencing.
 - Gisaid Metadata Parser - This module takes a set of Gisaid metadata and generate a visualizable data format similar to the output of the freyja pipeline. This allows for direct comparison of wastewater and patient data.
+- Get Mutation Profiles - This module allows the user to isolate mutation profiles of a lineage or set of lineages for manual comparison.
 
 # Important File Formats
 Many of the modules of wastewater tools require input files of differing formats. This section details the purpose and format of each.
