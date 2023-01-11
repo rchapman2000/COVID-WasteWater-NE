@@ -1,0 +1,4 @@
+sample,lineage,abundance,site
+Test-Sample,Omicron,0.8515,Site-X
+Test-Sample,Delta,0.1311,Site-X
+Test-Sample,Not a VOC,0.0061,Site-X

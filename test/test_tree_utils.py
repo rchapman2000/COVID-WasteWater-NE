@@ -189,7 +189,7 @@ class TestLineageTreeUtils(unittest.TestCase):
 
     
     def test_addLineagesToTree_inOrder(self):
-        lineages = ["B", "B.1", "XA", "B.2", "XC", "B.3", "B.1.1", "F.1", "B.1.1.529", "BA.5"]
+        lineages = ["B", "B.1", "XA", "XA.1", "B.2", "XC", "B.3", "LL.5", "B.1.1", "F.1", "B.1.1.529", "BA.5"]
 
         t = Tree()
         t.create_node("root", "root")
@@ -203,24 +203,9 @@ class TestLineageTreeUtils(unittest.TestCase):
         self.assertTrue(checkLineageExists(t,"B.1.1"))
         self.assertTrue(checkLineageExists(t,"B.1.1.529"))
         self.assertTrue(checkLineageExists(t,"BA.5"))
-
-        self.assertEqual(invalid, ["XA", "XC", "F.1"])
-
-    def test_addLineagesToTree_outOfOrder(self):
-        lineages = ["BA.5", "B.1", "XA", "B.2", "B.1.1.529", "XC", "B.3", "B.1.1", "B", "F.1"]
-
-        t = Tree()
-        t.create_node("root", "root")
-
-        t, invalid = addLineagesToTree(t, lineages, aliases)
-
-        self.assertTrue(checkLineageExists(t,"B.1"))
-        self.assertTrue(checkLineageExists(t,"B.2"))
-        self.assertTrue(checkLineageExists(t,"B.3"))
-        self.assertTrue(checkLineageExists(t,"B"))
-        self.assertTrue(checkLineageExists(t,"B.1.1"))
-        self.assertTrue(checkLineageExists(t,"B.1.1.529"))
-        self.assertTrue(checkLineageExists(t,"BA.5"))
+        self.assertTrue(checkLineageExists(t,"XA"))
+        self.assertTrue(checkLineageExists(t,"XA.1"))
+        self.assertTrue(checkLineageExists(t,"XC"))
 
         self.assertTrue(getParentLineage(t,"B"), "root")
         self.assertTrue(getParentLineage(t,"B.1"), "B")
@@ -229,12 +214,49 @@ class TestLineageTreeUtils(unittest.TestCase):
         self.assertTrue(getParentLineage(t,"B.1.1"), "B.1")
         self.assertTrue(getParentLineage(t,"B.1.1.529"), "B.1.1")
         self.assertTrue(getParentLineage(t,"BA.5"), "B.1.1.529")
+        self.assertTrue(getParentLineage(t,"XA"), "root")
+        self.assertTrue(getParentLineage(t,"XA.1"), "XA")
+        self.assertTrue(getParentLineage(t,"XC"), "root")
 
         self.assertFalse(checkLineageExists(t, "F.1"))
-        self.assertFalse(checkLineageExists(t, "XA"))
-        self.assertFalse(checkLineageExists(t, "XC"))
+        self.assertFalse(checkLineageExists(t, "LL.5"))
 
-        self.assertEqual(invalid, ["XA", "XC", "F.1"])
+        self.assertEqual(invalid, ["LL.5","F.1"])
+
+    def test_addLineagesToTree_outOfOrder(self):
+        lineages = ["BA.5", "LL.5", "B.1", "XA", "B.2", "B.1.1.529", "XC", "B.3", "B.1.1", "B", "F.1", "XA.1"]
+
+        t = Tree()
+        t.create_node("root", "root")
+
+        t, invalid = addLineagesToTree(t, lineages, aliases)
+
+        self.assertTrue(checkLineageExists(t,"B.1"))
+        self.assertTrue(checkLineageExists(t,"B.2"))
+        self.assertTrue(checkLineageExists(t,"B.3"))
+        self.assertTrue(checkLineageExists(t,"B"))
+        self.assertTrue(checkLineageExists(t,"B.1.1"))
+        self.assertTrue(checkLineageExists(t,"B.1.1.529"))
+        self.assertTrue(checkLineageExists(t,"BA.5"))
+        self.assertTrue(checkLineageExists(t,"XA"))
+        self.assertTrue(checkLineageExists(t,"XA.1"))
+        self.assertTrue(checkLineageExists(t,"XC"))
+
+        self.assertTrue(getParentLineage(t,"B"), "root")
+        self.assertTrue(getParentLineage(t,"B.1"), "B")
+        self.assertTrue(getParentLineage(t,"B.2"), "B")
+        self.assertTrue(getParentLineage(t,"B.3"), "B")
+        self.assertTrue(getParentLineage(t,"B.1.1"), "B.1")
+        self.assertTrue(getParentLineage(t,"B.1.1.529"), "B.1.1")
+        self.assertTrue(getParentLineage(t,"BA.5"), "B.1.1.529")
+        self.assertTrue(getParentLineage(t,"XA"), "root")
+        self.assertTrue(getParentLineage(t,"XA.1"), "XA")
+        self.assertTrue(getParentLineage(t,"XC"), "root")
+
+        self.assertFalse(checkLineageExists(t, "F.1"))
+        self.assertFalse(checkLineageExists(t, "LL.5"))
+
+        self.assertEqual(invalid, ["LL.5", "F.1"])
 
     def test_addWithDrawnLineagesToTree(self):
         t = Tree()

@@ -141,12 +141,12 @@ setup() {
     assert_output --partial "Both the --byDate and --byWeek options have been provided. Only one can be supplied."
 }
 
-@test "Complete Run: whole-genome, by sample, existing barcodes" {
+@test "Complete Run: whole-genome, by sample, existing barcodes, with recombinants" {
     run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE
     [ "$status" -eq 0 ]
-    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-Sample/Filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-Sample/Unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-Sample/Site-X-lineageMatrix.csv)"
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-sample-with-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-sample-with-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-sample-with-recombinants/Site-X-lineageMatrix.csv)"
     ["$result" -eq ''] 
     ["$result2" -eq '']
     ["$result3" -eq '']
@@ -159,12 +159,30 @@ setup() {
     rm $VALIDDEMIXDIR/Test-Sample.demix
 }
 
-@test "Complete Run: whole-genome, by date, existing barcodes" {
+@test "Complete Run: whole-genome, by sample, existing barcodes, no recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --filterRecombinants
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-sample-no-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-sample-no-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-sample-no-recombinants/Site-X-lineageMatrix.csv)"
+    ["$result" -eq ''] 
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: whole-genome, by date, existing barcodes, with recombinants" {
     run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byDate
     [ "$status" -eq 0 ]
-    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-Date/Filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-Date/Unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-Date/Site-X-lineageMatrix.csv)"
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-date-with-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-date-with-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-date-with-recombinants/Site-X-lineageMatrix.csv)"
     ["$result" -eq '']
     ["$result2" -eq '']
     ["$result3" -eq '']
@@ -177,17 +195,33 @@ setup() {
     rm $VALIDDEMIXDIR/Test-Sample.demix
 }
 
-@test "Complete Run: whole-genome, by week, existing barcodes" {
+@test "Complete Run: whole-genome, by date, existing barcodes, no recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byDate --filterRecombinants 
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-date-no-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-date-no-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-date-no-recombinants/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: whole-genome, by week, existing barcodes, with recombinants" {
     run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byWeek
     [ "$status" -eq 0 ]
-    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-Week/Filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-Week/Unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-Week/Site-X-lineageMatrix.csv)"
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-week-with-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-week-with-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-week-with-recombinants/Site-X-lineageMatrix.csv)"
     ["$result" -eq '']
     ["$result2" -eq '']
     ["$result3" -eq '']
-
-    [ -f ]
     
     rm -r $VALIDOUTDIR/freyja-results/
     rm -r $VALIDOUTDIR/barcodes-and-collapse/
@@ -197,12 +231,30 @@ setup() {
     rm $VALIDDEMIXDIR/Test-Sample.demix
 }
 
-@test "Complete Run: s-gene, by sample, existing barcodes" {
+@test "Complete Run: whole-genome, by week, existing barcodes, no recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --byWeek --filterRecombinants
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/whole-genome-by-week-no-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/whole-genome-by-week-no-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/whole-genome-by-week-no-recombinants/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: s-gene, by sample, existing barcodes, with recombinants" {
     run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene
     [ "$status" -eq 0 ]
-    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-Sample/Filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-Sample/Unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-Sample/Site-X-lineageMatrix.csv)"
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-sample-with-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-sample-with-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-sample-with-recombinants/Site-X-lineageMatrix.csv)"
     ["$result" -eq ''] 
     ["$result2" -eq '']
     ["$result3" -eq '']
@@ -215,12 +267,30 @@ setup() {
     rm $VALIDDEMIXDIR/Test-Sample.demix
 }
 
-@test "Complete Run: s-gene, by date, existing barcodes" {
-    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byDate
+@test "Complete Run: s-gene, by sample, existing barcodes, no recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --filterRecombinants
     [ "$status" -eq 0 ]
-    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-Date/Filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-Date/Unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-Date/Site-X-lineageMatrix.csv)"
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-sample-no-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-sample-no-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-sample-no-recombinants/Site-X-lineageMatrix.csv)"
+    ["$result" -eq ''] 
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: s-gene, by date, existing barcodes, with recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byDate 
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-date-with-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-date-with-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-date-with-recombinants/Site-X-lineageMatrix.csv)"
     ["$result" -eq '']
     ["$result2" -eq '']
     ["$result3" -eq '']
@@ -233,17 +303,51 @@ setup() {
     rm $VALIDDEMIXDIR/Test-Sample.demix
 }
 
-@test "Complete Run: s-gene, by week, existing barcodes" {
-    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byWeek
+@test "Complete Run: s-gene, by date, existing barcodes, no recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byDate --filterRecombinants
     [ "$status" -eq 0 ]
-    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-Week/Filtered-dataframe.csv)"
-    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-Week/Unfiltered-dataframe.csv)"
-    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-Week/Site-X-lineageMatrix.csv)"
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-date-no-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-date-no-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-date-no-recombinants/Site-X-lineageMatrix.csv)"
     ["$result" -eq '']
     ["$result2" -eq '']
     ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
 
-    [ -f ]
+@test "Complete Run: s-gene, by week, existing barcodes, with recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byWeek 
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-week-with-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-week-with-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-week-with-recombinants/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
+    
+    rm -r $VALIDOUTDIR/freyja-results/
+    rm -r $VALIDOUTDIR/barcodes-and-collapse/
+    rm $VALIDOUTDIR/Filtered-dataframe.csv
+    rm $VALIDOUTDIR/Unfiltered-dataframe.csv
+    rm $VALIDOUTDIR/Site-X-lineageMatrix.csv
+    rm $VALIDDEMIXDIR/Test-Sample.demix
+}
+
+@test "Complete Run: s-gene, by week, existing barcodes, no recombinants" {
+    run freyja-pipeline.sh --input $VALIDINDIR --output $VALIDOUTDIR --demixDir $VALIDDEMIXDIR --reference $VALIDREF --master $VALIDMASTER --barcode $VALIDBARCODE --collapse $VALIDCOLLAPSE --s_gene --byWeek --filterRecombinants
+    [ "$status" -eq 0 ]
+    result="$(diff $VALIDOUTDIR/Filtered-dataframe.csv $COMPAREDIR/s-gene-by-week-no-recombinants/Filtered-dataframe.csv)"
+    result2="$(diff $VALIDOUTDIR/Unfiltered-dataframe.csv $COMPAREDIR/s-gene-by-week-no-recombinants/Unfiltered-dataframe.csv)"
+    results3="$(diff $VALIDOUTDIR/Site-X-lineageMatrix.csv $COMPAREDIR/s-gene-by-week-no-recombinants/Site-X-lineageMatrix.csv)"
+    ["$result" -eq '']
+    ["$result2" -eq '']
+    ["$result3" -eq '']
     
     rm -r $VALIDOUTDIR/freyja-results/
     rm -r $VALIDOUTDIR/barcodes-and-collapse/

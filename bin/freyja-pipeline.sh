@@ -19,13 +19,14 @@ Help()
     echo "-b | --barcode BARCODE_FILE - A .csv barcode file to be used by Freyja for processing (Format provided on Github)."
     echo "-p | --removeFromFile FILE_PATTERN - A regex pattern that can be used to remove extraneous text from a sample name (Example provided on Github)."
     echo "--s_gene - Tells the pipeline to adapt for S-gene sequencing only (will modify barcodes to remove non-s-gene mutations and combine lineages identical within the s gene)"
-    echo "--byDate - Produces data grouped by date rather than by individual samples"
-    echo "--byWeek - Produces data grouped by week rather than by individual samples. Weeks start on Monday."
+    echo "--filterRecombinants - Tells the pipeline to remove any recombinant variants from the mutation barcodes and classification."
+    echo "--byDate - Produces data grouped by date rather than by individual samples."
+    echo "--byWeek - Produces data grouped by week rather than by individual samples. (Weeks are noted as beginning on Monday)"
     echo "--combineAll - Produces a combined file where lineage abundances from all sites are averaged together for each day/week."
     echo
 }
 
-OPTIONS=$(getopt -o i:o:d:r:m:b:c:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,collapse:,removeFromFile:,s_gene,byDate,byWeek,combineAll,help -a -- "$@")
+OPTIONS=$(getopt -o i:o:d:r:m:b:c:p:h -l input:,output:,demixDir:,reference:,masterfile:,barcode:,collapse:,removeFromFile:,s_gene,filterRecombinants,byDate,byWeek,combineAll,help -a -- "$@")
 if [ $? -ne 0 ]
 then
     echo ""
@@ -43,6 +44,7 @@ COLLAPSE=
 PATTERN=
 BYOPTION=
 SGENE=
+FILTERRECOMBINANTS=
 BYWEEK=
 BYDATE=
 COMBINEALL=
@@ -87,6 +89,10 @@ while true; do
         ;;
     --s_gene )
         SGENE="--s_gene"
+        shift
+        ;;
+    --filterRecombinants )
+        FILTERRECOMBINANTS="--filterRecombinants"
         shift
         ;;
     --byDate )
@@ -270,7 +276,7 @@ then
         mkdir $BARCODE_DIR
     fi
     
-    python3 $SCRIPT_DIR"scripts/update_barcodes_and_collapse.py" -o $BARCODE_DIR -c $COLLAPSE $SGENE
+    python3 $SCRIPT_DIR"scripts/update_barcodes_and_collapse.py" -o $BARCODE_DIR -c $COLLAPSE $SGENE $FILTERRECOMBINANTS
 
     if [ -n "$SGENE" ]
     then 
@@ -291,7 +297,7 @@ else
     then
         mkdir $BARCODE_DIR
     fi
-    python3 $SCRIPT_DIR"scripts/update_barcodes_and_collapse.py" -i $BARCODE -o $BARCODE_DIR -c $COLLAPSE $SGENE
+    python3 $SCRIPT_DIR"scripts/update_barcodes_and_collapse.py" -i $BARCODE -o $BARCODE_DIR -c $COLLAPSE $SGENE $FILTERRECOMBINANTS
 
     if [ -n "$SGENE" ]
     then 

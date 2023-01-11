@@ -87,9 +87,9 @@ class TestUtilityFunctions(unittest.TestCase):
         sublinMap = parseSublinMap(TEST_FILE_DIR + "/test-sublin-map.tsv")
 
         expectedMap = {
-            "Delta": ["AY.1", "AY.10", "AY.1_Sublineages_Like_AY.1.1"],
-            "Not a VOC": ["AV.1"],
-            "AY.1_Sublineages_Like_AY.1.1": ["AY.1.1", "AY.1.2", "AY.1.3"]
+            "Delta": ["Parent-Group", ["AY.1", "AY.10", "AY.1_Sublineages_Like_AY.1.1"]],
+            "Not a VOC": ["Parent-Group", ["AV.1"]],
+            "AY.1_Sublineages_Like_AY.1.1": ["Sub-Group", ["AY.1.1", "AY.1.2", "AY.1.3"]]
         }
 
         self.assertEqual(sublinMap, expectedMap)
@@ -136,6 +136,16 @@ class TestUtilityFunctions(unittest.TestCase):
         map = parseSublinMap(TEST_FILE_DIR + "/test-sublin-map.tsv")
         
         self.assertEqual(findLineageGroup("GG.2_Sublineages_Like_CC.5", map), "Unknown")
+
+    def test_findLineageGroup_LineageGroupIsExistingLineage(self):
+        # An older findLineageGroup algorithm ran into an error where, if a group
+        # were named exactly a lineage, it would cause an infinite recursion. This
+        # test is used to ensure a newer version of the algorithm does not have the same issue.
+
+        map = parseSublinMap(TEST_FILE_DIR + "/test-sublin-map-parent-group-name-is-lineage.tsv")
+
+        self.assertEqual(findLineageGroup("BA.1", map), "BA.1")
+        self.assertEqual(findLineageGroup("B.1.1.529_Sublineage_Like_BA.1", map), "BA.1")
 
     def test_collapseLineages_collapse_all(self):
         # Creates data for a test input

@@ -60,7 +60,7 @@ def getParentLineage(tree, lin):
     return parent
 
 def getSubLineages(tree, lin):
-    """ A recursive method that retreives
+    """ A recursive method that retrieves
     all of the sublineages of a given lineage.
 
     Parameters:
@@ -92,7 +92,7 @@ def getSubLineages(tree, lin):
         childNodes = tree.children(n.identifier)
 
         # Because of the structure of a tree,
-        # the children method only grabs the immediate chidlren of
+        # the children method only grabs the immediate children of
         # the node, but the complete list of sublineages also
         # considers the sublineages of those children. 
         # 
@@ -102,7 +102,7 @@ def getSubLineages(tree, lin):
             # Loops over the child nodes.
             for c in childNodes:
 
-                # Adds the child's lineags to the list of sublineages
+                # Adds the child's lineages to the list of sublineages
                 subLins.append(c.identifier)
 
                 # Grabs the sublineages of the child
@@ -291,10 +291,10 @@ def convertLongAlias(lin, aliases):
     aliasedLineage = None
     
     # Because each "levels" (or up to 3 numbers separated by a '.') make an
-    # aliase, we need to determine the number of levels present in the lineage.
+    # alias, we need to determine the number of levels present in the lineage.
     # Thus, we can use the length of the lineage split at the '.' character
-    # to determine this. We first need to subract 1 (to account for the letter in the 
-    # lienage name) and then divide by 3. We then perform a ceiling operation to account for
+    # to determine this. We first need to subtract 1 (to account for the letter in the 
+    # lineage name) and then divide by 3. We then perform a ceiling operation to account for
     # 'partially filled' levels (Ex: B.1.1.529.5.2 contains 5 numbers separated by '.', which would be 
     # 2 groups of 3 (5 / 3 = 1.5, so performing a ceiling operation will get us to 2) )
     aliasLevels = math.ceil((len(split) - 1) / 3)
@@ -317,7 +317,7 @@ def convertLongAlias(lin, aliases):
         # Now, loop over every alias in the dictionary
         for a in aliases.keys():
 
-            # If the portion of the linaege to be aliased matches the value. Then the aliase should replace
+            # If the portion of the lineage to be aliased matches the value. Then the alias should replace
             # this portion in the parent name.
             if ".".join(split[:pointToAlias]) == aliases[a]:
 
@@ -329,17 +329,17 @@ def convertLongAlias(lin, aliases):
 
 def parseParentFromLineage(l, aliases):
     """ Determines the parent of a given lineage based
-    on the lineage's name (not from a tree). Lineages are named in a heirarchical manner 
+    on the lineage's name (not from a tree). Lineages are named in a hierarchical manner 
     (Ex: B.1 is the parent of B.1.1), so this can be used in many cases.
     However, aliasing also occurs to prevent lengthy lineage names (Ex: BA.5 = B.1.1.529.5). The data
     file where the lineages are obtained from presents the lineages in their aliased format if their
     names were to be longer then 4 characters. Aliasing presents an interesting case where the parent
     of a lineages that has just been aliased (i.e. BA.5) will not contain the alias (Ex: B.1.1.529 is the parent of BA.5). 
-    Thus, we need to consider the alias/unaliased forms of the lineages when determining the variant parent.
+    Thus, we need to consider the alias/de-aliased forms of the lineages when determining the variant parent.
 
     Parameters:
         l: a SARS-CoV-2 lineage
-        aliases: a dictionary mapping an aliase to a corresponding lineage.
+        aliases: a dictionary mapping an alias to a corresponding lineage.
     Output:
         The parent lineage name
     """
@@ -348,12 +348,13 @@ def parseParentFromLineage(l, aliases):
     # at the '.' characters.
     splitLineage = l.split(".")
 
-    # Special Case: If the lineage is B or A, the parent will be
-    # the tree root node.
-    if l == "B" or l =='A':
+    # Special Case: If the lineage is B, A, or a recombinant without any
+    # components after the initial letter (i.e. XBB or XAA),
+    # the parent will be the tree root node.
+    if l == "B" or l =='A' or (l[0] == "X" and len(splitLineage) == 1):
         parent = "root"
     # If the length of the lineage is two, we need to check for an alias.
-    # The linaege may not need to be dealiased, as in the case of B.1, or it may
+    # The lineage may not need to be un-aliased, as in the case of B.1, or it may
     # as in the case of BA.2 where the parent is B.1.1.529 (this is the lineage given
     # in the tree).
     elif len(splitLineage) == 2:
@@ -363,31 +364,33 @@ def parseParentFromLineage(l, aliases):
 
         # Checks to see whether the alias is present in the dictionary
         if alias in aliases.keys():
-            # If the alias is present, grab the dealised lineage, which is the
+            # If the alias is present, grab the de-aliased lineage, which is the
             # value in the alias dictionary.
             dealiased = aliases[alias]
             
-            # 'B' and 'A' map to "" in the alias diciontary as they are not
+            # 'B' and 'A' map to "" in the alias dictionary as they are not
             # an alias to any lineages. Thus, the parent will be B or A lineage 
-            # themselves.
-            if dealiased == "":
-                # the parent of thse lineages will be the first
+            # themselves. A recombinant lineage will map to a list containing
+            # multiple derived lineages, and thus we will not need to proceed
+            # with de-aliased.
+            if dealiased == "" or type(dealiased) is list:
+                # the parent of these lineages will be the first
                 # character (B or A)
                 parent = splitLineage[0]
             else:
-                # Now, an alternative case arises. As linaeges grow longer,
+                # Now, an alternative case arises. As lineages grow longer,
                 # aliases can represent up to 7 sets of characters (Ex:
-                # BC = B.1.1.529.1.1.1). However, these lienages themselves 
+                # BC = B.1.1.529.1.1.1). However, these lineages themselves 
                 # contain a set of characters that can be aliased (B.1.1.529.1.1.1 -> BA.1.1.1).
-                # The parent node in the tree will be the aliased version, thus we need to realias,
-                # the dealiased parent.
+                # The parent node in the tree will be the aliased version, thus we need to re-alias,
+                # the de-aliased parent.
                 parent = convertLongAlias(dealiased, aliases)
         else:
             # If the alias does not exist in the alias dictionary, the lineage is invalid.
             # Thus, we will return the word invalid.
             parent = "invalid"
     else:
-        # If a lineage cotains greater than two sets of characters, there is no need to
+        # If a lineage contains greater than two sets of characters, there is no need to
         # convert between aliases. Because the lineages are already aliased, we do not have to
         # worry getting lineages longer than 7 sets of characters. And, the parent of these lineages will exist in its 
         # aliased form within the tree.
@@ -408,36 +411,30 @@ def addLineagesToTree(tree, lineages, aliases):
         # Grab the lineage at the start of the list.
         l = lineages[0]
 
-        # Recominant lineages begin with X, so if the lineage does
-        # not begin with 'X' we will add it to the tree
-        if l[0] != "X":
+        # First, we identify the lineage's parent.
+        parent = parseParentFromLineage(l, aliases)
 
-            # First, we identify the lineage's parent.
-            parent = parseParentFromLineage(l, aliases)
-
-            # If the function returned 'invalid' as the parent,
-            # add the lineage to the list of invalid lineages.
-            if parent == "invalid":
-                invalid.append(l)
-            # If the parent is valid, we then need to see if check if the parent lienage is
-            # already placed in the tree.
-            elif checkLineageExists(tree, parent) == False:
-                
-                # If the parent is not in the tree, there are two potentials:
-                # The lineage could be invalid or the parent is present in the list of lineages
-                # has not been added to the tree yet.
-
-                # If the lineage is not invalid, then the parent likely has not been added
-                # yet. So we can simply add the lineage to the end of the list and
-                # return to it later.
-                if l not in invalid:
-                    lineages.append(l)
-            # If the parent lineage is already present in the tree, we 
-            # can add the lineage.
-            else:
-                tree.create_node(l, l, parent)
-        else:
+        # If the function returned 'invalid' as the parent,
+        # add the lineage to the list of invalid lineages.
+        if parent == "invalid":
             invalid.append(l)
+        # If the parent is valid, we then need to see if check if the parent lineage is
+        # already placed in the tree.
+        elif checkLineageExists(tree, parent) == False:
+                
+            # If the parent is not in the tree, there are two potentials:
+            # The lineage could be invalid or the parent is present in the list of lineages
+            # has not been added to the tree yet.
+
+            # If the lineage is not invalid, then the parent likely has not been added
+            # yet. So we can simply add the lineage to the end of the list and
+            # return to it later.
+            if l not in invalid:
+                lineages.append(l)
+        # If the parent lineage is already present in the tree, we 
+        # can add the lineage.
+        else:
+            tree.create_node(l, l, parent)
 
         # Removes the lineage from the front of the list.
         lineages.pop(0)
@@ -485,7 +482,7 @@ def addWithdrawnLineagesToTree(tree, withdrawnLines, aliases):
             # Check whether the regex found a match
             if lineageResult:
                 
-                # If a match was found, check whether the linage in the decription
+                # If a match was found, check whether the linage in the description
                 # is already present in the tree.
                 if checkLineageExists(tree, lineageResult.group(1)):
                     

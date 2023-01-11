@@ -35,7 +35,7 @@ def parseCladeName(tree, clade):
         parent based on the nextstrain clade file.
 
         2. When there is no lineage given, but information given (Ex: 21J (Delta)), we will
-        set the equivalent lienage to 'None', concatenate the information with the clade name,
+        set the equivalent lineage to 'None', concatenate the information with the clade name,
         and associate the clade with its parent based on the nextstrain clade file.
 
 
@@ -158,7 +158,7 @@ def parseNSCladeFile(tree, clade):
 
     Output:
         A dictionary containing parsed clade name(s) as a key
-        mapping to corresponding parent libneage(s)
+        mapping to corresponding parent lineage(s)
     """
 
     # Create an empty dictionary. The dictionary will contain
@@ -194,7 +194,7 @@ def parseNSCladeFile(tree, clade):
     # Returns the dictionary.
     return cladeRelationships
 
-def buildLineageTree(outdir):
+def buildLineageTree(lineageFile, aliases, nsclades, filterRecombinants):
     """ Builds a tree data structure containing SARS-CoV-2 lineages.
     This is useful when creating the groups to collapse the individual sublineages
     into as well as when combining groups that have identical S-gene profiles.
@@ -202,71 +202,48 @@ def buildLineageTree(outdir):
     A tree data structure consists of individual nodes which map to children.
 
     Parameters:
-        outdir - the output directory. Data files will be
-                 written here
+        lineageFile - A file containing a list of updated lineages
+        aliases - a json file containing aliases and their corresponding
+                  lineage
+        nsclades - a json file containing the hierarchial structure of
+                   nextstrain SARS-CoV-2 clade definitions.
+        filterRecombinants - a boolean value denoting whether recombinant
+                             lineages should be included in the analysis.
 
     Output:
         A tree containing SARS-CoV-2 lineages
     """
 
-    # Most lineages are obtained from the pango-designation github. This data source is
-    # updated frequently with new lineages and updates to existing lineages.
-    #
-    # Each line of the data file contains a lineage and description separated by a tab character.
-    # The file also contains withdrawn lineages (Beginning with a '*' character) which are useful for our pipeline as 
-    # previously classified lineages may have been withdrawn. By mapping these withdrawn
-    # lineages we can be sure that the older data does not need to be rerun.
-    LineageUrl = "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineage_notes.txt"
-    ur.urlretrieve(LineageUrl, outdir + "lineages.txt")
-
-    # Lineages are named in a hierarchical manner (i.e B is the parent of B.1, and so on). However, when
-    # a name would contain more than 3 numbers (4 characters), it is aliased to shorten it (Ex: BA.1 = B.1.1.529.1).
-    # Thus, this is something we need to take into account when placing lineages on the tree.
-    #
-    # The pango-designation github contains an alias key file which maps aliases to their corresponding lineage.
-    AliasUrl = "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json"
-    ur.urlretrieve(AliasUrl, outdir + "alias_key.json")
-
-    # Finally, the USHER phylogenetic tree (used by freyja to build the barcodes), contains the nextstrain clades in addition
-    # to the pango lineages. Thus, to ensure that we group these into the proper collapsing group,
-    # we must place these clades onto the tree. In order to do so we need to know the most equivalent lineage. The nextstrain
-    # github has a repository containing a clade phylogenetic tree where they list the clades and their corresponding
-    # equivalent lineages. 
-    # 
-    # We can pull this file and parse it to add the clades on the tree.
-    NextStrainCladeUrl = "https://raw.githubusercontent.com/nextstrain/ncov-clades-schema/master/src/clades.json"
-    ur.urlretrieve(NextStrainCladeUrl, outdir + "NSClades.json")
-    
-    # Reads the alias and nextstrain clade json files into 
-    # dictionaries.
-    aliases = json.load(open(outdir + "/alias_key.json"))
-    nsclades = json.load(open(outdir + "/NSClades.json"))
-
-    # Opens the lineages file and skips the header line.
-    lineageFile = open(outdir + "lineages.txt", "r")
-    lineageFile.readline()
-
     # We first need to read through the lineages file and separate the viable from the 
     # withdrawn lineages. The viable lineages will have no issue being placed on the tree.
     # Thus, we only need to grab the lineage. However, some of the withdrawn lineages do
     # not have an existing parent (even one that has been withdrawn) and we need to keep their
-    # information which contains information on what they are aliases of or were reclassified as.
-    # Then we could place them under these lineages rather than a parent.
+    # information as this may contain whether they are aliases of another lineage or were reclassified.
+    # Using this, we could place them under these lineages rather than a parent. The notAdded list will contain 
+    # recombinant lineages if they were filtered by the user.
     lineages = []
     withdrawnLines = []
+    notAdded = [] # No use implemented yet
+    
     for line in lineageFile:
+
         # Withdrawn lineage begin with a '* character'
-        # If the lines do not start with this character, it must be a viable lineage
-        if line[0] != "*":
+        # If the lines starts with this character, it must be a withdrawn lineage and
+        # should be added to the list of withdrawn lineages
+        if line[0] == "*":
+            # Add the entire line to the list of withdrawn lineages (being sure to
+            # correct lines that are not separated by a tab)
+            withdrawnLines.append(line.strip().replace(" Withdrawn", "\tWithdrawn"))
+        # If the user requested to filter recombinant lineages, and the lineage starts
+        # with the letter X, then we added it to a list of lineages to not be added.
+        elif filterRecombinants and line[0] == "X":
+            notAdded.append(line.strip())
+        else:
             # The lineage is separated by the description by a tab (except for a few cases where
             # it is separated by a space, but we correct for this using the replace function).
             # So we can split the line by the tab character and append the first value to the
             # list of lineages.
             lineages.append(line.strip().replace(" Alias", "\tAlias").split("\t")[0])
-        else:
-            # Add the entire line to the list of withdrawn lineages (being sure to
-            # correct lines that are not separated by a tab)
-            withdrawnLines.append(line.strip().replace(" Withdrawn", "\tWithdrawn"))
 
     # Create an empty tree with a node labeled root.
     t = Tree()
@@ -276,10 +253,14 @@ def buildLineageTree(outdir):
     # and recombinant lineages
     invalid = []
 
+    # Add the lineages to the empty tree.
     t, invalid = addLineagesToTree(t, lineages, aliases)
-
+    
+    # Add the withdrawn lineages to the tree
     t, invalidWithdrawn = addWithdrawnLineagesToTree(t, withdrawnLines, aliases)
 
+    # Append any invalid withdrawn lineages to the existing list of invalid
+    # lineages.
     invalid.append(invalidWithdrawn)
     
     # Finally, we need to add the Nextstrain clades to the tree
@@ -317,7 +298,7 @@ def buildLineageTree(outdir):
     # The tree is now complete, so we can return it.
     return t
 
-def getSublineageCollapse(tree, groups, barcodeLineages):
+def getSublineageCollapse(tree, groups, recombinants, barcodeLineages):
     """ Creates the sublineage collapse map 
     given the defined groups.
 
@@ -338,12 +319,13 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
     under a group itself. This can be seen with the example above with the groups 'Omicron (BA.2)'
     and 'Omicron (BA.2.12.1)'. By nature of the tree, BA.2.12.1 and all of its sublineages are
     sublineages of BA.2 and would fall under both groups. Thus, we need to remove all of the BA.2.12.1
-    sublineags from the other BA.2 sublineages. The function takes this exception into account
+    sublineages from the other BA.2 sublineages. The function takes this exception into account
 
     Parameters:
         tree: A tree containing SARS-CoV-2 lineages
         groups: A dictionary where each key is a group mapped to values
                 of lineages to collapse into that group.
+        recombinants: A list of recombinant lineages found in the barcodes
         barcodeLineages: A list of lineages present in the barcodes (to
                          account for lineages that may not be present in
                          the tree already)
@@ -353,6 +335,15 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
         fall under them.
     """
 
+    # As well, recombinant lineages need to be considered. Our current solution is
+    # to add them to a sublineage collapse map group named "Recombinant" .
+    # However, if the user wants any of these recombinant lineages placed under their own group,
+    # then they will need to be removed from the "Recombinant" group. Thus, we can create
+    # a list of ungrouped recombinants and remove lineages we place under another group. The 
+    # remaining recombinant lineages in this list will become the "Recombinant Group"
+    ungroupedRecombinants = recombinants
+
+
     # The function first goes through each of the lineages provided by the user
     # and finds all of the sublineages. This will later be used to remove lineages that
     # are sublineages of a variant in one group, but the user desires in their own group
@@ -361,25 +352,41 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
     # 
     # It first creates a dictionary to store each lineage and its sublineages.
     parentSublineages = {}
+
     # Loops over each group
     for g in groups.keys():
         # Loops over each lineage under each group
         for p in groups[g]:
+
+            # First, we need to create a list to store
+            # the given lineage and its sublineages. The reason we
+            # need to include the lineage itself is because we will later
+            # "subtract" these from any parent lineages that the user
+            # groups separately. Thus, we want the lineage itself subtracted
+            # from that other group.
+            linDescendants = [p]
+
             # Grabs the sublineages of that lineage
             sublins = getSubLineages(tree, p)
+
             # If sublineages were returned, 
             # append the parent to the list
             if sublins != None:
-                sublins.append(p)
-            # If no sublineages were
-            # returned, create a new list
-            # containing only the parent.
-            else:
-                sublins = [p]
+                linDescendants.extend(sublins)
+
+            # If the lineage were a recombinant, then
+            # we need to remove it and its sublineages
+            # from the other ungrouped sublineages. Thus,
+            # we can loop over the lineage descendants
+            # removing them from the ungrouped lineages
+            # list if they are present.
+            for lin in linDescendants:
+                if lin in ungroupedRecombinants:
+                    ungroupedRecombinants.remove(lin)
             
             # Add the parent and the sublineages 
             # to the running list.
-            parentSublineages[p] = sublins
+            parentSublineages[p] = linDescendants
 
     # Now, we can use the previously created dictionary to remove
     # overlapping sublineages.
@@ -423,16 +430,19 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
             # map dictionary, create a new key value pair
             # housing the lineage's sublineages
             if g not in sublineageMap.keys():
-                sublineageMap[g] = parentSublineages[lin]
+                sublineageMap[g] = ["Parent-Group", parentSublineages[lin]]
 
             # If the group has already been added to the collapse
             # map dictionary, append the lineage's sublineages
             else:
-                sublineageMap[g].extend(parentSublineages[lin])
+                sublineageMap[g][1].extend(parentSublineages[lin])
+
+    # Create a group to store ungrouped, recombinant lineages
+    sublineageMap["Recombinant"] = ["Parent-Group", ungroupedRecombinants]
 
     # Now that we have created entries for the lineages
-    # requested by the user, any lineages not present in these
-    # groups will need to be added to the "Not A VOC" group
+    # requested by the user and recombinant lineages, any lineages
+    # not present in these groups will need to be added to the "Not A VOC" group
 
     # Create an empty list to store the "Not a VOC" lineages
     notAVOC = []
@@ -440,7 +450,7 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
     # Loops over every node in the tree.
     for node in tree.expand_tree(mode=Tree.DEPTH):
 
-        # Grabes the id of each node, which corresponds
+        # Grabs the id of each node, which corresponds
         # to the lineages name
         lin = tree[node].identifier
         
@@ -454,7 +464,7 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
         for list in sublineageMap.values():
             # If the lineage is present in the list,
             # set the boolean to false and exit the loop 
-            # (too prevent unnecessary coparisons) 
+            # (too prevent unnecessary comparisons) 
             if lin in list:
                 notCollapsed = False
                 break
@@ -465,9 +475,9 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
         if notCollapsed:
             notAVOC.append(lin)
 
-    # Create a new group in the sublienage map mapping 
+    # Create a new group in the sublineage map mapping 
     # to the "Not a VOC" lineages
-    sublineageMap["Not a VOC"] = notAVOC
+    sublineageMap["Not a VOC"] = ["Parent-Group", notAVOC]
 
     # The final case to check for is if a lineage is present in the
     # barcodes, but not in the lineage tree already. These lineages
@@ -480,7 +490,8 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
     # lineages in the barcodes
     for lin in barcodeLineages:
 
-        # If the lineage does not exist in the tree
+        # If the lineage does not exist in the tree and is not
+        # a recombinant
         if not checkLineageExists(tree, lin):
 
             # The lineage may still be classifiable, as some contain
@@ -516,7 +527,7 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
                         if linInName in sublineageMap[g]:
                             # If so, add the unknown lineage under that group
                             sublineageMap[g].append(lin)
-                            # Break to prevent unecessary comparisons
+                            # Break to prevent unnecessary comparisons
                             break
                 # If the lineage pulled from the name does not exist, add
                 # the unknown lineages to the unknown list
@@ -530,12 +541,12 @@ def getSublineageCollapse(tree, groups, barcodeLineages):
     if len(notFoundLins) != 0:
         # Create a new group in the sublineage map 
         # to store these unknown lineages.
-        sublineageMap["Unknown"] = notFoundLins
+        sublineageMap["Unknown"] = ["Parent-Group", notFoundLins]
 
     # Return the sublineage map
     return sublineageMap
 
-def removeFromsublineageMap(lins, sm):
+def removeFromSublineageMap(lins, sm):
     """ Takes a list of lineages and removes them from
     a sublineage map. This function is useful when combining groups 
     for S-gene barcodes.
@@ -557,12 +568,12 @@ def removeFromsublineageMap(lins, sm):
             # If the lineage is present in the
             # group's list of lineages, remove it
             # from the list
-            if lin in sm[g]:
-                sm[g].remove(lin)
+            if lin in sm[g][1]:
+                sm[g][1].remove(lin)
     # Return the modified sublineage map
     return sm
 
-def writesublineageMap(sm, outDir):
+def writeSublineageMap(sm, outDir):
     """ Writes a sublineage map to a file
 
     Parameters:
@@ -577,16 +588,16 @@ def writesublineageMap(sm, outDir):
     o = open("{0}sublineage-map.tsv".format(outDir), "w+")
 
     # Write a header into the file.
-    o.write("Group\tSublineages\n")
+    o.write("Group\tGroup-Type\tSublineages\n")
     # Loop over every group in the sublineage map
     for g in sm.keys():
 
         # Check whether the group has lineages grouped under it
-        if len(sm[g]) != 0:
+        if len(sm[g][1]) != 0:
             # Write the group name and list of lineages
             # to the file separated by a tab. The list
             # of lineages is joined with a comma.
-            o.write("{0}\t{1}\n".format(g, ",".join(sm[g])))
+            o.write("{0}\t{1}\t{2}\n".format(g, sm[g][0], ",".join(sm[g][1])))
 
     # Close the file stream.
     o.close()
@@ -631,14 +642,53 @@ def main():
     parser.add_argument("--s_gene", required=False, \
         help = "Supplying this option tells the pipeline to filter the barcodes and lineages to include only S gene mutations", \
         action = 'store_true', dest = 'sgene')
+    parser.add_argument("--filterRecombinants", required=False, \
+        help = "This pipeline automatically removed barcodes for 'proposed' and 'misc' lineages, but keeps recombinant lineages by default. Supply this argument to filter out recombinant lineages as well", \
+        action ='store_true', dest = 'noRecombinants')
 
     args = parser.parse_args()
 
     # Parses the output directory inputted by the user
     outdir = parseDirectory(args.outdir)
 
-    # Creates the lineage tree
-    lineageTree = buildLineageTree(outdir)
+    # Now, we need to download files to create a lineage hierarchy.
+
+    # Most lineages are obtained from the pango-designation github. This data source is
+    # updated frequently with new lineages and updates to existing lineages.
+    #
+    # Each line of the data file contains a lineage and description separated by a tab character.
+    # The file also contains withdrawn lineages (Beginning with a '*' character) which are useful for our pipeline as 
+    # previously classified lineages may have been withdrawn. By mapping these withdrawn
+    # lineages we can be sure that the older data does not need to be rerun.
+    LineageUrl = "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/lineage_notes.txt"
+    ur.urlretrieve(LineageUrl, outdir + "lineages.txt")
+
+    # Lineages are named in a hierarchical manner (i.e B is the parent of B.1, and so on). However, when
+    # a name would contain more than 3 numbers (4 characters), it is aliased to shorten it (Ex: BA.1 = B.1.1.529.1).
+    # Thus, this is something we need to take into account when placing lineages on the tree.
+    #
+    # The pango-designation github contains an alias key file which maps aliases to their corresponding lineage.
+    AliasUrl = "https://raw.githubusercontent.com/cov-lineages/pango-designation/master/pango_designation/alias_key.json"
+    ur.urlretrieve(AliasUrl, outdir + "alias_key.json")
+
+    # Finally, the USHER phylogenetic tree (used by freyja to build the barcodes), contains the nextstrain clades in addition
+    # to the pango lineages. Thus, to ensure that we group these into the proper collapsing group,
+    # we must place these clades onto the tree. In order to do so we need to know the most equivalent lineage. The nextstrain
+    # github has a repository containing a clade phylogenetic tree where they list the clades and their corresponding
+    # equivalent lineages. 
+    # 
+    # We can pull this file and parse it to add the clades on the tree.
+    NextStrainCladeUrl = "https://raw.githubusercontent.com/nextstrain/ncov-clades-schema/master/src/clades.json"
+    ur.urlretrieve(NextStrainCladeUrl, outdir + "NSClades.json")
+    
+    # Reads the alias and nextstrain clade json files into 
+    # dictionaries.
+    aliases = json.load(open(outdir + "/alias_key.json"))
+    nsclades = json.load(open(outdir + "/NSClades.json"))
+
+    # Opens the lineages file and skips the header line.
+    lineageFile = open(outdir + "lineages.txt", "r")
+    lineageFile.readline()
 
     # Parses the --input option
     df = ''
@@ -657,18 +707,35 @@ def main():
         df = parseCSVToDF(barcodes, ',', header=True)
 
 
-    print("NOTE: All 'proposed', 'misc', and recombinant lineages will be filtered from the barcodes\n")
-    # Filter the barcodes to removed any proposed lineages,
-    # misc lineages, and hybrid lineages (X#)
+    print("NOTE: All 'proposed' and 'misc' lineages will be filtered from the barcodes by default\n")
+    # Filter the barcodes to removed any proposed lineages or
+    # misc lineages
     filterProposed = df.iloc[:,0].str.contains("proposed\d+")
     df = df[~filterProposed]
     filterMisc = df.iloc[:,0].str.contains("misc.*")
     df = df[~filterMisc]
-    filterRecombinant = df.iloc[:,0].str.contains("X.*")
-    df = df[~filterRecombinant]
     df.iloc[:,0] = df.iloc[:,0].str.replace(" ", '')
+
+    # Next, recombinant lineages are identified within the
+    # barcodes and handled depending on the user's input
+    filterRecombinant = df.iloc[:,0].str.contains("X.*")
+    recombinantLineages = []
     
-    
+    # Check whether the user supplied the option to filter out
+    # recombinant lineages.
+    if args.noRecombinants:
+        # If they did, notify the user by printing a message to the terminal and filter out 
+        # these variants. The recombinant lineage list created earlier will remain empty.
+        print("NOTE: Recombinant Lineage Filter Option Supplied By User - Recombinant lineages will not be included in barcodes or sublineage map\n")
+        df = df[~filterRecombinant]
+    else:
+        # If they did not specify to filter recombinant lineages, populate the
+        # recombinant lineage list with the lineages found earlier.
+        recombinantLineages = df[filterRecombinant].iloc[:,0].values.tolist()
+
+    # Creates the lineage tree
+    lineageTree = buildLineageTree(lineageFile, aliases, nsclades, args.noRecombinants)
+
     # Sets the index to the first column which contains
     # lineages names
     df = df.set_index('Unnamed: 0')
@@ -706,9 +773,7 @@ def main():
 
         # Uses the lineages to collapse dictionary created from the input file
         # to create a sublineage map file
-        sublineageMap = getSublineageCollapse(lineageTree, lineagesToCollapse, list(df.index))
-
-
+        sublineageMap = getSublineageCollapse(lineageTree, lineagesToCollapse, recombinantLineages, list(df.index))
     else:
         # If the file does not exist, exit the script and notify the user.
         sys.exit("ERROR: File {0} does not exist!".format(args.collapse))
@@ -716,7 +781,7 @@ def main():
     # If the user supplied the --s_gene option, we need to remove
     # variants outside of the S gene from the barcodes, combine
     # variants with identical S gene mutation profiles, and add these
-    # groupsings to the collapse map
+    # groupings to the collapse map
     if args.sgene:
         print("S-Gene Option supplied.\nModifying barcodes and sublineage map to account for S-gene identical variants\n")
         # Saves the start and end positions of the SARS-CoV-2 S gene
@@ -803,8 +868,8 @@ def main():
                 #   PARENTLINEAGE = closest common parent of the lineages in the group
                 # and
                 #   LINEAGEFROMGROUP = the first lineage from the lineages in the
-                #   collapse grouo majority when sorted in alphabetical order.
-                #   (e.x. {BA.1, BA.1.1, AY.1} will be PARENTLINEAGEG_Sublineages_Like_BA.1)
+                #   collapse group majority when sorted in alphabetical order.
+                #   (e.x. {BA.1, BA.1.1, AY.1} will be PARENTLINEAGE_Sublineages_Like_BA.1)
 
 
                 # Create an empty variable to store the group's label
@@ -817,12 +882,12 @@ def main():
                 # which collapse group to place the group under (as we could
                 # choose different options). To solve this, we will count the number
                 # how many lineages from each collapse group are present in the s-gene
-                # identical group, and place the s-gene idetnical group under
+                # identical group, and place the s-gene identical group under
                 # the collapse group that is most represented. 
 
                 # Create an empty dictionary which will map collapse groups
                 # to the list of their lineages present in the s-gene identical group
-                sepByCollapseGoup = {}
+                sepByCollapseGroup = {}
 
                 # Now, we need to loop over the lineages in the
                 # s gene identical group and determine which collapse
@@ -832,19 +897,19 @@ def main():
                     for group in sublineageMap.keys():
                         # Check whether the lineage falls under that 
                         # collapse group
-                        if lin in sublineageMap[group]:
+                        if lin in sublineageMap[group][1]:
                             # If the lineage fell under that collapse group,
                             # 
 
                             # Check whether the collapse group has already been added to
                             # the dictionary.
-                            if group not in sepByCollapseGoup.keys():
+                            if group not in sepByCollapseGroup.keys():
                                 # If not, create an entry holding the lineage
-                                sepByCollapseGoup[group] = [lin]
+                                sepByCollapseGroup[group] = [lin]
                             else:
                                 # If it has, append the lineage to the list
                                 # of lineages.
-                                sepByCollapseGoup[group].append(lin)
+                                sepByCollapseGroup[group].append(lin)
 
                             # Break to prevent unnecessary iterations
                             break
@@ -860,8 +925,8 @@ def main():
                 
                 # There may be a case where none of the lineage were
                 # found in the collapse map. Thus, we need to check whether
-                # any collapse gorups were added to the dictionary
-                if len(sepByCollapseGoup.keys()) == 0:
+                # any collapse groups were added to the dictionary
+                if len(sepByCollapseGroup.keys()) == 0:
                     # If there were no collapse groups found, we can
                     # collapse the s-gene identical group under "Unknown"
                     collapseGroup = "Unknown"
@@ -874,11 +939,11 @@ def main():
                     # Otherwise, we can can find the collapse group that had the most lineages
                     # in the in the s-gene identical group and select that to place
                     # the s-gene identical group under
-                    collapseGroup = max(sepByCollapseGoup, key=lambda x: len(sepByCollapseGoup[x]))
+                    collapseGroup = max(sepByCollapseGroup, key=lambda x: len(sepByCollapseGroup[x]))
 
                     # Then, the 'similar to' lineage will be the first lineage in the 
                     # list of lineages from the majority collapse group when sorted alphabetically.
-                    similarTo = sorted(sepByCollapseGoup[collapseGroup])[0]
+                    similarTo = sorted(sepByCollapseGroup[collapseGroup])[0]
 
                 # Now, we can find the parent lineage to add to the group name, by finding
                 # the common parent of the lineages in the s-gene identical group.
@@ -905,14 +970,14 @@ def main():
 
                 # Adds the S-gene identical group under the collapse group 
                 # determined earlier
-                sublineageMap[collapseGroup].append(groupLabel)
+                sublineageMap[collapseGroup][1].append(groupLabel)
 
                 # Remove the lineages in the s-gene identical group from their collapse groups
-                sublineageMap = removeFromsublineageMap(groupLins, sublineageMap)
+                sublineageMap = removeFromSublineageMap(groupLins, sublineageMap)
 
                 # Create a new collapse group in the sublienage map for the s-gene 
                 # identical group.
-                sublineageMap[groupLabel] = groupLins
+                sublineageMap[groupLabel] = ["Sub-Group", groupLins]
 
                 # Set the label for the barcode file equal to the label for the group
                 bcLabel = groupLabel
@@ -944,7 +1009,7 @@ def main():
         df.index.name = None
         df.to_csv("{0}filtered_barcodes.csv".format(outdir), index=True)
 
-    writesublineageMap(sublineageMap, outdir)
+    writeSublineageMap(sublineageMap, outdir)
     if os.path.exists("{0}usher_barcodes.csv".format(outdir)):
         os.rename("{0}usher_barcodes.csv".format(outdir), "{0}raw_barcodes.csv".format(outdir))
 

@@ -116,15 +116,19 @@ def parseSublinMap(sublinFile):
             # The group name will be the first value in
             # the tab separated list
             group = splitLine[0]
+
+            # The group type of the group will be 
+            # the second value in the tab separated list
+            groupType = splitLine[1]
             
-            # If there are more htan one lineage in a group,
+            # If there are more than one lineage in a group,
             # they will be separated by commas. Thus, we need to 
             # separate those.
-            lineages = splitLine[1].split(",")
+            lineages = splitLine[2].split(",")
 
             # Creates key value in the dictionary mapping
             # the group name to the list of lineages
-            sublinMap[group] = lineages
+            sublinMap[group] = [groupType, lineages]
         
         # Closes the file and returns the dictionary
         f.close()
@@ -139,8 +143,8 @@ def findLineageGroup(lin, map):
     """ A recursive method that finds the final grouping of a 
     lineage within a sublineage map. It searches the values of the
     key-value pairs in the dictionary until it locates the lineage. It then 
-    takes the group name and calls itself. Once the group name is no longer
-    found in the values of the dictionary, we have reached the final grouping
+    takes the group name and, if the group is a 'Sub-Group', calls itself again. 
+    Once the group type is 'Parent-Group', we have reached the final grouping
     and this is returned.
 
     There are a few special cases that need to be considered:
@@ -173,15 +177,19 @@ def findLineageGroup(lin, map):
     # Create an empty variable to store the group name.
     group = ''
 
+    # Create an empty variable to store the group type
+    groupType = ''
+
     # Loop over each group in the sublineage map
     for g in map.keys():
 
         # Check whether the lineage is found in that group
-        if lin in map[g]:
+        if lin in map[g][1]:
             # If so, update the group variable to
             # contain the group that the lineage
-            # was found under
+            # was found under and the group type
             group = g
+            groupType = map[g][0]
 
             # Once the lineage is found, we can
             # break from the loop to prevent unnecessary 
@@ -192,9 +200,15 @@ def findLineageGroup(lin, map):
     # the lineage was found
     if group != '':
 
-        # We now need to check the group to see whether
-        # it is the final classification.
-        return findLineageGroup(group, map)
+        # If the group is a sub-group, we then need to find
+        # the parent of that group.
+        if groupType == "Sub-Group":
+            return findLineageGroup(group, map)
+        # If not, the group must be a 'Parent-Group', in which case,
+        # we can return the group
+        else:
+            return group
+
     # If the group is empty, then the lineage
     # was not found in any of the values
     # of the dictionary.
@@ -202,60 +216,61 @@ def findLineageGroup(lin, map):
         # If the lineage is one of the sublineage map
         # keys, then it is the final classification and
         # should be returned
-        if lin in map.keys():
-            return lin
+        #if lin in map.keys():
+        #    return lin
         # If the lineage is not one of they keys,
         # this means that the name provided was not
-        # found within the map. Then we need to check
-        # whether it is an s-gene identical group name
+        # found within the map. 
+        # 
+        # We need to check whether it is an s-gene identical group name
         # and if we can use any of the 
         # lineages present in the name to classify
         # the group.
-        else:
+        #else:
 
-            # We can break a group's name apart by
-            # underscores to grab any lineages present
-            splitName = lin.split("_")
+        # We can break a group's name apart by
+        # underscores to grab any lineages present
+        splitName = lin.split("_")
 
-            # We need to check whether we are looking at
-            # a group name vs a lineage. A lineage should not contain any
-            # underscores and should have a length of 1.
-            if len(splitName) > 1:
-                # If the split name has more than 1 value, then it
-                # is an s-gene identical group name. In the groups,
-                # the last item in the split list will be the first
-                # lineage in the list alphabetically and the first
-                # is the most recent common parent of the group. Thus,
-                # we can grab these try to find their final groups.
-                checkLikeLin = findLineageGroup(splitName[-1], map)
-                checkParentLin = findLineageGroup(splitName[0], map)
+        # We need to check whether we are looking at
+        # a group name vs a lineage. A lineage should not contain any
+        # underscores and should have a length of 1.
+        if len(splitName) > 1:
+            # If the split name has more than 1 value, then it
+            # is an s-gene identical group name. In the groups,
+            # the last item in the split list will be the first
+            # lineage in the list alphabetically and the first
+            # is the most recent common parent of the group. Thus,
+            # we can grab these try to find their final groups.
+            checkLikeLin = findLineageGroup(splitName[-1], map)
+            checkParentLin = findLineageGroup(splitName[0], map)
 
-                # The first lineage in the group alphabetically should be
-                # used before the parent (because a likely case
-                # is that another lineage was just added to the group
-                # and came before this lineage alphabetically)
-                if checkLikeLin != "Unknown":
-                    # If a group was found for this lineage, return it.
-                    return checkLikeLin
+            # The first lineage in the group alphabetically should be
+            # used before the parent (because a likely case
+            # is that another lineage was just added to the group
+            # and came before this lineage alphabetically)
+            if checkLikeLin != "Unknown":
+                # If a group was found for this lineage, return it.
+                return checkLikeLin
 
-                # If no lineage group was found for the first lineage
-                # alphabetically, then this lineage may have been removed
-                # from the group due to being withdraw. Thus, we should
-                # use the common parent's group
-                elif checkParentLin != "Unknown":
-                    # If a group was found for the common parent, return it.
-                    return checkParentLin
+            # If no lineage group was found for the first lineage
+            # alphabetically, then this lineage may have been removed
+            # from the group due to being withdraw. Thus, we should
+            # use the common parent's group
+            elif checkParentLin != "Unknown":
+                # If a group was found for the common parent, return it.
+                return checkParentLin
 
-                # Finally, if neither the first lineage alphabetically
-                # or common parent had a group in the list, return "Unknown"
-                else:
-                    return "Unknown"
-            
-            # If the split name only contained 1 value, then this
-            # was likely a single lineage and is thus unknown.
+            # Finally, if neither the first lineage alphabetically
+            # or common parent had a group in the list, return "Unknown"
             else:
-                # Return "unknown"
                 return "Unknown"
+            
+        # If the split name only contained 1 value, then this
+        # was likely a single lineage and is thus unknown.
+        else:
+            # Return "unknown"
+            return "Unknown"
 
 def collapseLineages(sample, unfiltData, cutoff, map):
     """ Collapses individual lineages into their parents based on

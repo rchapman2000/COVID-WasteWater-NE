@@ -61,7 +61,7 @@ def main():
     # Filters the accession ID, collectiondate, and lineage columns from the metadata file
     filteredMD = MD[["Accession ID", "Collection date", "Pango lineage"]]
 
-    # Filteres the data to only contain rows with complete collection dates
+    # Filters the data to only contain rows with complete collection dates
     # (i.e. not missing the day or month) and with assigned lineages only.
     filteredMD = filteredMD[filteredMD['Collection date'].str.contains('\d\d\d\d-\d\d-\d\d')]
     filteredMD = filteredMD[filteredMD['Pango lineage'] != "Unassigned"]
@@ -70,7 +70,7 @@ def main():
     filteredMD['DateToUse'] = ''
 
     # Loops over each rop in the metadata to exclude dates that fall outside of the 
-    # specificed range. Additionally, this handles assigning each row a week, if the
+    # specified range. Additionally, this handles assigning each row a week, if the
     # --byWeek option was specified.
     for index, row in filteredMD.iterrows():
 
@@ -96,7 +96,7 @@ def main():
     # Grabs a list of all f the unique dates/weeks present in the data.
     dates = filteredMD['DateToUse'].unique().tolist()
 
-    # Defines lists/disctionaries to store processed data.
+    # Defines lists/dictionaries to store processed data.
     lngAbunds = {}
     unfilteredData = []
     filteredData = []
