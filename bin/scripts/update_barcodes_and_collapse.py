@@ -9,7 +9,7 @@ import urllib.request as ur
 import json
 import re
 from data_manip_utils import parseCSVToDF, parseDirectory
-from tree_utils import addLineagesToTree, addWithdrawnLineagesToTree, checkLineageExists, getCommonLineageParent, getSubLineages, parseParentFromLineage
+from tree_utils import addLineagesToTree, addWithdrawnLineagesToTree, checkLineageExists, checkIfRecombinant, getCommonLineageParent, getSubLineages, parseParentFromLineage
 
 def parseCladeName(tree, clade):
     """ The nextstrain clades pulled from the USHER phylogenetic
@@ -234,16 +234,31 @@ def buildLineageTree(lineageFile, aliases, nsclades, filterRecombinants):
             # Add the entire line to the list of withdrawn lineages (being sure to
             # correct lines that are not separated by a tab)
             withdrawnLines.append(line.strip().replace(" Withdrawn", "\tWithdrawn"))
-        # If the user requested to filter recombinant lineages, and the lineage starts
-        # with the letter X, then we added it to a list of lineages to not be added.
-        elif filterRecombinants and line[0] == "X":
-            notAdded.append(line.strip())
         else:
             # The lineage is separated by the description by a tab (except for a few cases where
             # it is separated by a space, but we correct for this using the replace function).
             # So we can split the line by the tab character and append the first value to the
             # list of lineages.
-            lineages.append(line.strip().replace(" Alias", "\tAlias").split("\t")[0])
+            lin = line.strip().replace(" Alias", "\tAlias").split("\t")[0]
+
+            # Checks whether the user would like to filter recombinant lineages
+            if filterRecombinants:
+                # If yes, check whether the lineage is a recombinant before
+                # placing it into the list containing lineages to be 
+                # placed on the tree.
+                if checkIfRecombinant(lin, aliases):
+                    # If the lineage is a recombinant, append it to 
+                    # the list of lineages ignored.
+                    notAdded.append(lin)
+                else:
+                    # If the lineage is not a recombinant, append it 
+                    # to the list of lineages that will be added
+                    # to the tree.
+                    lineages.append(lin)
+            else:
+                # If the user did not filter recombinants, simply add all
+                # lineages to the list of lineages that will be added to the tree.
+                lineages.append(lin)
 
     # Create an empty tree with a node labeled root.
     t = Tree()
@@ -462,10 +477,11 @@ def getSublineageCollapse(tree, groups, recombinants, barcodeLineages):
         # Loops over all of the values (lists of lineages in each group)
         # in the collapse map
         for list in sublineageMap.values():
-            # If the lineage is present in the list,
+            # If the lineage is present in the groups list of lineages,
             # set the boolean to false and exit the loop 
             # (too prevent unnecessary comparisons) 
-            if lin in list:
+            groupLins = list[1]
+            if lin in groupLins:
                 notCollapsed = False
                 break
 
@@ -717,21 +733,30 @@ def main():
     df.iloc[:,0] = df.iloc[:,0].str.replace(" ", '')
 
     # Next, recombinant lineages are identified within the
-    # barcodes and handled depending on the user's input
-    filterRecombinant = df.iloc[:,0].str.contains("X.*")
+    # barcodes and stored in a list.
     recombinantLineages = []
+    for lin in df.iloc[:,0].tolist():
+        if checkIfRecombinant(lin, aliases):
+            recombinantLineages.append(lin)
+    
+    # A filter is created for the recombinant lineages identified
+    # in the previous lines.
+    filterRecombinant = df.iloc[:,0].isin(recombinantLineages)
     
     # Check whether the user supplied the option to filter out
     # recombinant lineages.
     if args.noRecombinants:
         # If they did, notify the user by printing a message to the terminal and filter out 
-        # these variants. The recombinant lineage list created earlier will remain empty.
+        # these variants.
         print("NOTE: Recombinant Lineage Filter Option Supplied By User - Recombinant lineages will not be included in barcodes or sublineage map\n")
+        
+        # Remove the recombinant lineages from the barcodes.
         df = df[~filterRecombinant]
-    else:
-        # If they did not specify to filter recombinant lineages, populate the
-        # recombinant lineage list with the lineages found earlier.
-        recombinantLineages = df[filterRecombinant].iloc[:,0].values.tolist()
+        
+        # Set the list of recombinant lineages to empty as they have been
+        # filtered out, and this list is later used to 
+        # build the sublineage map.
+        recombinantLineages = []
 
     # Creates the lineage tree
     lineageTree = buildLineageTree(lineageFile, aliases, nsclades, args.noRecombinants)

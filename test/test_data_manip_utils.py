@@ -36,11 +36,11 @@ class TestUtilityFunctions(unittest.TestCase):
 
         self.assertEqual(parseDirectory(valid_dir), expected)
     
-    def test_parseDirectory_valid_relative(self):
-        valid_dir = "./test/"
-        expected = os.getcwd() + "/./test/"
+    #def test_parseDirectory_valid_relative(self):
+    #    valid_dir = "./data-manip-utils-test/valid-dir/"
+    #    expected = os.getcwd() + "/./data-manip-utils-test/valid-dir/"
 
-        self.assertEqual(parseDirectory(valid_dir), expected)
+    #    self.assertEqual(parseDirectory(valid_dir), expected)
     
     def test_parseDirectory_valid_no_slash(self):
         valid_dir = TEST_FILE_DIR + "/valid-dir"

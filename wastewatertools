@@ -31,7 +31,7 @@ elif [ "$1" = parse_gisaid ]; then
 elif [ "$1" = barcode_and_collapse ]; then
     python3 "$SRC_DIR"/bin/scripts/update_barcodes_and_collapse.py ${@:2}
 elif [ "$1" = get_mutation_profile ]; then
-    python3 "$SRC_DIR"/bin/scripts/get_mutation_profile.py ${@:2}
+    python3 "$SRC_DIR"/bin/scripts/get_mutation_profiles.py ${@:2}
 elif [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
     Help
 else 

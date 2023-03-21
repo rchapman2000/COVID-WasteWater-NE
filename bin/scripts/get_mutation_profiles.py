@@ -78,11 +78,11 @@ def main():
             for g in sublinMap.keys():
                 # Checks whether the lineage is
                 # found within the group.
-                if l in sublinMap[g]:
+                if l in sublinMap[g][1]:
                     # If so, update the lineage group and lineages in group
                     # variable and break from the loop to prevent unnecessary comparisons.
                     LinGroup = g
-                    LinsInGroup = sublinMap[g]
+                    LinsInGroup = sublinMap[g][1]
                     break
 
             # Checks whether the lineage was found in any groups and whether this 

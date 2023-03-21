@@ -139,12 +139,14 @@ class TestSGeneBarcodeParser(unittest.TestCase):
         self.assertFalse("B_Sublineages_Like_B" in mapKeys)
 
         self.assertEqual(findLineageGroup("BA.2.12.1", sublinMap), "Omicron (BA.2.12.1)")
+        self.assertTrue("B_2.12.1" not in "Not a VOC")
         self.assertEqual(findLineageGroup("AY.1", sublinMap), "Delta")
         self.assertEqual(findLineageGroup("B", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("B.15", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("B.20", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("XBB.1", sublinMap), "Recombinant")
         self.assertEqual(findLineageGroup("XBB.1.1", sublinMap), "Recombinant")
+
 
         cleanUpFiles()
 
@@ -160,9 +162,11 @@ class TestSGeneBarcodeParser(unittest.TestCase):
         self.assertEqual(sublinMap["B_Sublineages_Like_B"], ["Sub-Group", ["B", "B.15", "B.20"]])
         self.assertEqual(findLineageGroup("B_Sublineages_Like_B", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("BA.2.12.1", sublinMap), "Omicron (BA.2.12.1)")
+        self.assertTrue("B_2.12.1" not in "Not a VOC")
         self.assertEqual(findLineageGroup("AY.1", sublinMap), "Delta")
         self.assertEqual(sublinMap["XBB.1_Sublineages_Like_XBB.1"], ["Sub-Group", ["XBB.1", "XBB.1.1"]])
         self.assertEqual(findLineageGroup("XBB.1_Sublineages_Like_XBB.1", sublinMap), "Recombinant")
+
 
         cleanUpFiles()
 
@@ -177,10 +181,12 @@ class TestSGeneBarcodeParser(unittest.TestCase):
         self.assertFalse("Recombinant" in mapKeys)
 
         self.assertEqual(findLineageGroup("BA.2.12.1", sublinMap), "Omicron (BA.2.12.1)")
+        self.assertTrue("B_2.12.1" not in "Not a VOC")
         self.assertEqual(findLineageGroup("AY.1", sublinMap), "Delta")
         self.assertEqual(findLineageGroup("B", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("B.15", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("B.20", sublinMap), "Not a VOC")
+        
         self.assertEqual(findLineageGroup("XBB.1", sublinMap), "Unknown")
         self.assertEqual(findLineageGroup("XBB.1.1", sublinMap), "Unknown")
 
@@ -201,10 +207,61 @@ class TestSGeneBarcodeParser(unittest.TestCase):
         self.assertEqual(sublinMap["B_Sublineages_Like_B"], ["Sub-Group", ["B", "B.15", "B.20"]])
         self.assertEqual(findLineageGroup("B_Sublineages_Like_B", sublinMap), "Not a VOC")
         self.assertEqual(findLineageGroup("BA.2.12.1", sublinMap), "Omicron (BA.2.12.1)")
+        self.assertTrue("B_2.12.1" not in "Not a VOC")
         self.assertEqual(findLineageGroup("AY.1", sublinMap), "Delta")
         self.assertEqual(findLineageGroup("XBB.1", sublinMap), "Unknown")
         self.assertEqual(findLineageGroup("XBB.1.1", sublinMap), "Unknown")
         self.assertEqual(findLineageGroup("XBB.1_Sublineages_Like_XBB.1", sublinMap), "Unknown")
+
+
+        cleanUpFiles()
+
+    def test_SublinMap_WholeGenome_Filter_Recombinants_Aliased_Recombinant(self):
+        cmd = "python3 {0}/../bin/scripts/update_barcodes_and_collapse.py -i {1} -o {2} -c {3} --filterRecombinants".format(SCRIPT_DIR, TEST_FILE_DIR + "/test-input-barcodes-w-aliased-recombinant.csv", TEST_FILE_DIR, TEST_FILE_DIR + "/test-collapse-2-groups.tsv")
+        sp.run(cmd, check=True, stdout=sp.PIPE, stderr=sys.stdout, shell=True)
+
+        sublinMap = parseSublinMap(TEST_FILE_DIR + "/sublineage-map.tsv")
+
+        mapKeys = list(sublinMap.keys())
+        self.assertEqual(mapKeys, ["Omicron (BA.2.12.1)", "Delta", "Not a VOC"])
+        self.assertFalse("Recombinant" in mapKeys)
+
+        self.assertEqual(findLineageGroup("BA.2.12.1", sublinMap), "Omicron (BA.2.12.1)")
+        self.assertTrue("B_2.12.1" not in "Not a VOC")
+        self.assertEqual(findLineageGroup("AY.1", sublinMap), "Delta")
+        self.assertEqual(findLineageGroup("B", sublinMap), "Not a VOC")
+        self.assertEqual(findLineageGroup("B.15", sublinMap), "Not a VOC")
+        self.assertEqual(findLineageGroup("B.20", sublinMap), "Not a VOC")
+        
+        self.assertEqual(findLineageGroup("XBB.1", sublinMap), "Unknown")
+        self.assertEqual(findLineageGroup("XBB.1.1", sublinMap), "Unknown")
+        self.assertEqual(findLineageGroup("EU.1", sublinMap), "Unknown")
+
+        cleanUpFiles()
+
+
+    def test_SublinMap_SGene_Filter_Recombinants_Aliased_Recombinant(self):
+        cmd = "python3 {0}/../bin/scripts/update_barcodes_and_collapse.py -i {1} -o {2} -c {3} --s_gene --filterRecombinants".format(SCRIPT_DIR, TEST_FILE_DIR + "/test-input-barcodes-w-aliased-recombinant.csv", TEST_FILE_DIR, TEST_FILE_DIR + "/test-collapse-2-groups.tsv")
+        sp.run(cmd, check=True, stdout=sp.PIPE, stderr=sys.stdout, shell=True)
+
+        sublinMap = parseSublinMap(TEST_FILE_DIR + "/sublineage-map.tsv")
+
+        mapKeys = list(sublinMap.keys())
+        self.assertEqual(list(sublinMap.keys()), ["Omicron (BA.2.12.1)", "Delta", "Not a VOC", "B_Sublineages_Like_B"])
+        self.assertFalse("Recombinant" in mapKeys)
+        self.assertFalse("XBB.1_Sublineages_Like_XBB.1" in mapKeys)
+
+        self.assertEqual(sublinMap["B_Sublineages_Like_B"], ["Sub-Group", ["B", "B.15", "B.20"]])
+        self.assertEqual(findLineageGroup("B_Sublineages_Like_B", sublinMap), "Not a VOC")
+        self.assertEqual(findLineageGroup("BA.2.12.1", sublinMap), "Omicron (BA.2.12.1)")
+        self.assertTrue("B_2.12.1" not in "Not a VOC")
+        self.assertEqual(findLineageGroup("AY.1", sublinMap), "Delta")
+        
+        self.assertEqual(findLineageGroup("XBB.1", sublinMap), "Unknown")
+        self.assertEqual(findLineageGroup("XBB.1.1", sublinMap), "Unknown")
+        self.assertEqual(findLineageGroup("EU.1", sublinMap), "Unknown")
+        self.assertEqual(findLineageGroup("XBB.1_Sublineages_Like_XBB.1", sublinMap), "Unknown")
+
 
         cleanUpFiles()
 

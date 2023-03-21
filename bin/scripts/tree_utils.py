@@ -11,7 +11,7 @@ def checkLineageExists(tree, lin):
     a given tree
     
     Parameters:
-        tree: a tree object containg SARS-CoV-2 Lineages
+        tree: a tree object containing SARS-CoV-2 Lineages
         lin: the desired lineage to be searched
 
     Output:
@@ -109,7 +109,7 @@ def getSubLineages(tree, lin):
                 cChildren = getSubLineages(tree, c.identifier)
 
                 # Checks whether the sublineages of the
-                # child contains any lienages.
+                # child contains any lineages.
                 if cChildren != None:
                     # If so, extend the list of sublineages to
                     # include the child's sublineages
@@ -162,7 +162,7 @@ def commonAncestor(tree, lin1, lin2):
 
     Parameters:
         tree: A tree containing SARS-CoV-2 lineages
-        lin1: one of the lineages to be compated.
+        lin1: one of the lineages to be compared.
         lin2: one of the lineages to be compared.
     """
 
@@ -266,14 +266,75 @@ def getCommonLineageParent(tree, lins):
     # Return the parent lineage.
     return parent
 
+def checkIfRecombinant(lin, aliases):
+    """ Identifies whether a lineage is a recombinant. This function was added because,
+    previously, all recombinant lineages began with an X character. However, now recombinant
+    sublineages can be aliased with a normal set of characters. Thus, to determine is a lineage is a
+    recombinant or not, we need to check whether it either begins with an X character or its unaliased
+    name begins with an X character.
+
+    Parameters:
+        lin: a lineage to be checked
+        aliases: a dictionary mapping an alias to a given lineage
+
+    Output:
+        A boolean value denoting whether the lineage is
+        a recombinant.
+    """
+     
+    # Create a boolean value representing whether
+    # a lineage is a recombinant with a default value if False.
+    # This value will be changed if the lineage matches the checks for
+    # a recombinant lineage below.
+    isRecombinant = False
+
+    # Checks whether a lineage begins with X (the simplest
+    # case of a recombinant lineage)
+    if lin[0] == "X":
+        # If yes, this lineage is a recombinant and 
+        # we can set the boolean value to true
+        isRecombinant = True
+    else:
+        # If not, there is still a chance that the lineage
+        # is an aliased sublineage of a recombinant.
+
+        # First, split the lineage at the period characters
+        splitLineage = lin.split(".")
+
+        # The alias will be the first component of the lineage
+        # name
+        alias = splitLineage[0]
+
+        # Check whether the alias is in the keys of 
+        # the alias dictionary.
+        if alias in aliases.keys():
+            # If so, grab the value (the unaliased
+            # lineage) from the alias dictionary
+            unaliased = aliases[alias]
+
+            # Any alias that does not represent a lineage (such as B or A)
+            # will map to an empty string. In this case, we can ignore these
+            # lineages
+            if unaliased != "":
+                # Check whether the unaliased lineage
+                # begins with X
+                if unaliased[0] == "X":
+                    # If yes, this lineage is a recombinant and
+                    # we can set the boolean value to true
+                    isRecombinant = True
+    
+    # Return the boolean value
+    return isRecombinant
+
+
 def convertLongAlias(lin, aliases):
     """ Within the alias_key file, aliases are mapped directly to their unaliased equivalents.
     Each time a lineage hits more than 3 levels within its name, it becomes aliased. Ex: BA.5 = BA.1.1.529.5.
     For aliases such as this, placing a child on the tree is simple, as the alias will be the direct parent
-    However, some aliases correspond to mupltiple levels of aliasing (Ex: BE = B.1.1.529.5.3.1), which makes placing 
-    these lineages on the tree difficult. Within these longer unaliased lineage equivalent, there is an aliase itself
+    However, some aliases correspond to multiple levels of aliasing (Ex: BE = B.1.1.529.5.3.1), which makes placing 
+    these lineages on the tree difficult. Within these longer unaliased lineage equivalent, there is another alias itself
     (Ex: BE = B.1.1.529.5.3.1 = BA.5.3.1). When trying to place variants like this ont eh tree, their exact
-    unalised lineage will not be present on the tree (as we place aliased lineages on the tree). Thus, we need to re-alias
+    unaliased lineage will not be present on the tree (as we place aliased lineages on the tree). Thus, we need to re-alias
     these variants in order to find the correct parent.
 
     Parameters:
