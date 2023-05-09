@@ -1,5 +1,6 @@
 import sys
 import os
+import re
 import pandas as pd
 from datetime import datetime as dt
 
@@ -137,7 +138,37 @@ def parseSublinMap(sublinFile):
         # If the file does not exist, notify the user and exit.
         sys.exit("ERROR: File {0} does not exist!".format(sublinFile))
 
+def getMutationCoords(m):
+    """ Uses a regular expression to extract the coordinate
+    from a mutation in the format referencePOSITIONalternate (Ex:
+    A123T or C555G).
 
+    Parameters:
+        m - the mutation to be parsed
+    """
+
+    # Creates a variable to store the coordinate of 
+    # the mutation. The variable is set to None by Default 
+    coord = None
+
+    # A regex pattern that contains a capture
+    # group surrounding the mutation coordinate.
+    mutationRegex = r"[ACGT](\d+)[ACGT]"
+
+    # Use a regex match (the pattern must
+    # match at the beginning of the string)
+    # to search for the pattern in the mutation provided
+    mutResult = re.match(mutationRegex, m)
+
+    # Checks whether a match was returned
+    if mutResult:
+        # If so, the coordinate will be 
+        # stored in teh result's capture
+        # group
+        coord = int(mutResult.group(1))
+
+    # Return the coordinate
+    return coord
 
 def findLineageGroup(lin, map):
     """ A recursive method that finds the final grouping of a 

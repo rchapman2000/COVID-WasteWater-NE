@@ -76,17 +76,17 @@ Wastewater tools contains several different modules pertinent to the analysis of
 Many of the modules of wastewater tools require input files of differing formats. This section details the purpose and format of each.
 
 ## Collapse File
-The pipeline will use its tree of SARS-CoV-2 lineages to automatically collapse sublineages into classes that the user defines. The collapse file is the file where the user defines these classes. The file consists of two columns:
+The pipeline will use its tree of SARS-CoV-2 lineages to automatically collapse sublineages into classes that the user defines. The collapse file is the file where the user defines these classes. The file consists of two columns separated by tab character:
 1. Class - the name of the class
-2. Parent/Representative lineage(s) within the class - multiple lineages can be supplied here
+2. Parent/Representative lineage(s) within the class - multiple lineages can be supplied here by separating them with a comma
 
 **(File Header is required)**
 ```
-Class,Parent
-Alpha,B.1.1.7
-Delta,B.1.617.2
-Omicron,B.1.1.529,BA.1,BA.3
-Omicron (BA.2),BA.2
+Class   Parent
+Alpha   B.1.1.7
+Delta   B.1.617.2
+Omicron B.1.1.529,BA.1,BA.3
+Omicron (BA.2)  BA.2
 ```
 ## Master File
 The master file is a CSV file used by the pipeline to link a sample/file name to a Date and Collection Site. Thus it must containg the following columns:
@@ -115,7 +115,7 @@ If you wish to make a custom barcode file for another virus or organism, the bar
 4. Cells are filled with 0 if a variant does not contain that mutation
 5. Cells are filled with a 1 if a variant does contain that mutation
 6. The first column contains variant names
-7. The first row contains nucleotide subsitution names
+7. The first row contains nucleotide substitution names
 
 **Example:**
 ```
@@ -125,7 +125,7 @@ B2,1,0
 B3,0,0
 ```
 ## Sublineage Map
-The Sublineage Map file denotes how to collapse individual subvariants to make output data more easily digestible. These files structured as a TSV, but represent a dictionary data structure. The file contains the following three columns separated by a tab character:
+The Sublineage Map file denotes how to collapse individual sublineages to make output data more easily digestible. These files structured as a TSV, but represent a dictionary data structure. The file contains the following three columns separated by a tab character:
 1. Group - The label to be given to that group of sublineages
 2. Group-Type - This tag is used by the lineage collapsing algorithm to determine whether it has found the final classification. Groups can be either a 'Parent-Group', the highest level of classification of a lineage, or a 'Sub-Group', which are S-gene identical groups. 'Sub-Groups' should be collapsed under 'Parent-Groups, and thus need the algorithm to be run again. 
 3. Sublineages - A comma separated list of sublineages/groups to classify under that group
@@ -352,7 +352,12 @@ wastewatertools parse_gisaid -i INFILE \
 # Get Mutation Profile Module
 The Get Mutation Profile module can be used to isolate mutation profiles of specified lineages for manual comparison. 
 
-A single lineage or list of lineages separated by commas can be supplied, and the mutation profiles will be aggregated into one output CSV file. This module also takes into account the fact that individual lineages may be present in S-Gene identical groups. Thus, it also outputs a summary file that notes whether a lineage is member in a certain S-gene identical group and lists the other lineages present in the group.
+A single lineage or list of lineages separated by commas can be supplied, and the mutation profiles will be aggregated into an output file. If multiple lineages are supplied (and found within the supplied barcodes), the output file will also contain the unique mutations and defining mutations of the supplied lineages. There terms are defined as follows:
+
+- Unique Mutations - the mutations that, out of the lineages provided, are only found in a given lineage.
+- Defining Mutations - the combination of mutations that distinguishes a given lineage from the other lineages provided.
+
+This module also takes into account the fact that individual lineages may be present in S-Gene identical groups. Thus, it also outputs a summary file that notes whether a lineage is member in a certain S-gene identical group and lists the other lineages present in the group.
 
 *Note: automated test cases for this module are in development*
 ## Running the Get Mutation Profile Module

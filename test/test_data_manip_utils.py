@@ -10,7 +10,8 @@ import pandas as pd
 from datetime import datetime as dt
 
 from bin.scripts.data_manip_utils import findLineageGroup, parseDirectory, \
-     parseDate, parseCSVToDF, collapseLineages, parseSublinMap, writeDataFrame, writeLineageMatrix
+    parseDate, parseCSVToDF, collapseLineages, parseSublinMap, writeDataFrame,\
+    writeLineageMatrix, getMutationCoords
 
 TEST_FILE_DIR = SCRIPT_DIR + "/data-manip-utils-test"
 
@@ -101,6 +102,20 @@ class TestUtilityFunctions(unittest.TestCase):
         with self.assertRaises(SystemExit) as cm:
             parseSublinMap(invalid_file)
             self.assertEqual(cm.exception, expected_error)
+
+    def test_getMutationCoords_valid(self):
+
+        self.assertEqual(getMutationCoords("A5555T"), 5555)
+        self.assertEqual(getMutationCoords("G2C"), 2)
+        self.assertEqual(getMutationCoords("C000A"), 0)
+        self.assertEqual(getMutationCoords("T1234567G"), 1234567)
+
+    def test_getMutationCoords_invalid(self):
+
+        self.assertEqual(getMutationCoords("F001A"), None)
+        self.assertEqual(getMutationCoords("G001"), None)
+        self.assertEqual(getMutationCoords("001A"), None)
+        self.assertEqual(getMutationCoords(""), None)
 
     def test_findLineageGroup_ungroupedLineage(self):
         map = parseSublinMap(TEST_FILE_DIR + "/test-sublin-map.tsv")
