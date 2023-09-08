@@ -255,7 +255,7 @@ def buildLineageTree(lineageFile, aliases, nsclades, filterRecombinants):
                     # to the list of lineages that will be added
                     # to the tree.
                     lineages.append(lin)
-            else:
+            elif(lin != ""):
                 # If the user did not filter recombinants, simply add all
                 # lineages to the list of lineages that will be added to the tree.
                 lineages.append(lin)
