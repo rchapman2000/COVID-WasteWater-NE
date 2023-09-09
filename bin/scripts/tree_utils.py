@@ -503,7 +503,7 @@ def addLineagesToTree(tree, lineages, aliases):
     return tree, invalid
 
 
-def addWithdrawnLineagesToTree(tree, withdrawnLines, aliases):
+def addWithdrawnLineagesToTree(tree, withdrawnLines, aliases, filterRecombinants):
     # For the withdrawn lineages, there are cases when the lineage
     # does not have an existing parent (even among the withdrawn lineage).
     # Instead of just removing these linages we can grab the lineage that it
@@ -521,51 +521,59 @@ def addWithdrawnLineagesToTree(tree, withdrawnLines, aliases):
         # associated with them. We need to separate the two. As well,
         # we need to remove the '*' character from the lineage.
         lineage = w.split("\t")[0].replace("*", "")
-        info = w.split("\t")[1]
 
-        # Now, we can try to grab the parent given the lineage.
-        parent = parseParentFromLineage(lineage, aliases)
+        if filterRecombinants and checkIfRecombinant(lineage, aliases):
+            pass
 
-        # There are cases where a lineage is listed both as existing and withdrawn.
-        # Thus, if the lineage exists, we need to skip this.
-        if checkLineageExists(tree, lineage):
-            pass # Do nothing - left this case if future addition is needed
+        else: 
+            info = w.split("\t")[1]
 
-        # We also need to check whether the parent lineage exists.
-        #
-        # If not, we can check whether a related lineage is present in the description,
-        elif checkLineageExists(tree, parent) == False:
-            
-            # searches for a match for the lineage regex pattern in the
-            # lineage information.
-            lineageResult = re.search(lineageRegexPattern, info)
-            
-            # Check whether the regex found a match
-            if lineageResult:
+            # Now, we can try to grab the parent given the lineage.
+            parent = parseParentFromLineage(lineage, aliases)
+
+            # There are cases where a lineage is listed both as existing and withdrawn.
+            # Thus, if the lineage exists, we need to skip this.
+            if checkLineageExists(tree, lineage):
+                pass # Do nothing - left this case if future addition is needed
+
+            # We also need to check whether the parent lineage exists.
+            #
+            # If not, we can check whether a related lineage is present in the description,
+            elif checkLineageExists(tree, parent) == False:
                 
-                # If a match was found, check whether the linage in the description
-                # is already present in the tree.
-                if checkLineageExists(tree, lineageResult.group(1)):
+                # searches for a match for the lineage regex pattern in the
+                # lineage information.
+                lineageResult = re.search(lineageRegexPattern, info)
+                
+                # Check whether the regex found a match
+                if lineageResult:
                     
-                    # If the lineage was found, we can use this as the parent for
-                    # the withdrawn lineage.
-                    parent = lineageResult.group(1)
-                    tree.create_node(lineage, lineage, parent)
+                    # If a match was found, check whether the linage in the description
+                    # is already present in the tree.
+                    if checkLineageExists(tree, lineageResult.group(1)):
+                        
+                        # If the lineage was found, we can use this as the parent for
+                        # the withdrawn lineage.
+                        parent = lineageResult.group(1)
+                        tree.create_node(lineage, lineage, parent)
+                    else:
+                        
+                        if checkIfRecombinant(lineage, aliases) and filterRecombinants:
+                            pass
+                        else:
+                            # If the lineage was not found in the tree, we can find what would
+                            # be the parent of that lineage and add the withdrawn lineage under that.
+                            equivalentParent = parseParentFromLineage(lineageResult.group(1), aliases)
+                            tree.create_node(lineage, lineage, equivalentParent)
+            
+                # If the regex pattern did not match, add the withdrawn lineage to the 
+                # list of invalid lineages.
                 else:
-                    
-                    # If the lineage was not found in the tree, we can find what would
-                    # be the parent of that lineage and add the withdrawn lineage under that.
-                    equivalentParent = parseParentFromLineage(lineageResult.group(1), aliases)
-                    tree.create_node(lineage, lineage, equivalentParent)
-           
-            # If the regex pattern did not match, add the withdrawn lineage to the 
-            # list of invalid lineages.
+                    invalid.append(lineage)
+            
+            # If the parent lineage obtained from the withdrawn lineage does exist,
+            # we can add the withdrawn lineage directly to the tree.
             else:
-                invalid.append(lineage)
-        
-        # If the parent lineage obtained from the withdrawn lineage does exist,
-        # we can add the withdrawn lineage directly to the tree.
-        else:
-            tree.create_node(lineage, lineage, parent)
+                tree.create_node(lineage, lineage, parent)
 
     return tree, invalid

@@ -241,24 +241,26 @@ def buildLineageTree(lineageFile, aliases, nsclades, filterRecombinants):
             # list of lineages.
             lin = line.strip().replace(" Alias", "\tAlias").split("\t")[0]
 
-            # Checks whether the user would like to filter recombinant lineages
-            if filterRecombinants:
-                # If yes, check whether the lineage is a recombinant before
-                # placing it into the list containing lineages to be 
-                # placed on the tree.
-                if checkIfRecombinant(lin, aliases):
-                    # If the lineage is a recombinant, append it to 
-                    # the list of lineages ignored.
-                    notAdded.append(lin)
+            if lin != "":
+
+                # Checks whether the user would like to filter recombinant lineages
+                if filterRecombinants:
+                    # If yes, check whether the lineage is a recombinant before
+                    # placing it into the list containing lineages to be 
+                    # placed on the tree.
+                    if checkIfRecombinant(lin, aliases):
+                        # If the lineage is a recombinant, append it to 
+                        # the list of lineages ignored.
+                        notAdded.append(lin)
+                    else:
+                        # If the lineage is not a recombinant, append it 
+                        # to the list of lineages that will be added
+                        # to the tree.
+                        lineages.append(lin)
                 else:
-                    # If the lineage is not a recombinant, append it 
-                    # to the list of lineages that will be added
-                    # to the tree.
+                    # If the user did not filter recombinants, simply add all
+                    # lineages to the list of lineages that will be added to the tree.
                     lineages.append(lin)
-            elif(lin != ""):
-                # If the user did not filter recombinants, simply add all
-                # lineages to the list of lineages that will be added to the tree.
-                lineages.append(lin)
 
     # Create an empty tree with a node labeled root.
     t = Tree()
@@ -272,7 +274,7 @@ def buildLineageTree(lineageFile, aliases, nsclades, filterRecombinants):
     t, invalid = addLineagesToTree(t, lineages, aliases)
     
     # Add the withdrawn lineages to the tree
-    t, invalidWithdrawn = addWithdrawnLineagesToTree(t, withdrawnLines, aliases)
+    t, invalidWithdrawn = addWithdrawnLineagesToTree(t, withdrawnLines, aliases, filterRecombinants)
 
     # Append any invalid withdrawn lineages to the existing list of invalid
     # lineages.

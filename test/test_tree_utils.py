@@ -267,7 +267,7 @@ class TestLineageTreeUtils(unittest.TestCase):
 
         t, invalid = addLineagesToTree(t, linsToAdd, aliases)
 
-        t, invalidWithdrawn = addWithdrawnLineagesToTree(t, withdrawnToAdd, aliases)
+        t, invalidWithdrawn = addWithdrawnLineagesToTree(t, withdrawnToAdd, aliases, False)
 
         self.assertTrue(checkLineageExists(t, "B.2.1"))
         self.assertTrue(checkLineageExists(t, "B.2.6"))
